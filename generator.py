@@ -239,6 +239,41 @@ def publish_to_wp(data_to_publish, site_config):
         logging.error(f"Odpowiedź serwera: {r.text}")
         return None
 
+def step_news_article(research_data, site_config, topic_data):
+    """
+    Generuje krótki artykuł newsowy na podstawie researchu:
+    - wypunktowane kluczowe dane,
+    - 1–2 cytaty ekspertów,
+    - krótki komentarz redakcyjny.
+    """
+    prompt = textwrap.dedent(f"""
+        Jesteś dziennikarzem newsowym. Masz zebrać i skondensować poniższe informacje w **krótki artykuł (300–400 słów)**:
+        - Najważniejsze fakty i liczby dotyczące: "{topic_data.get('title')}" ({topic_data.get('url')})
+        - Opinie 2 ekspertów (prawdziwe cytaty).
+        - Krótki komentarz redaktora podsumowujący znaczenie tych wydarzeń.
+
+        Dane do analizy:
+        {research_data}
+
+        Zwróć gotowy tekst w HTML, używając tylko tagów <h2>, <p>, <ul>, <li>, <strong>, <blockquote>.
+    """)
+    return _call_perplexity_api(prompt)
+
+def run_news_process(site_key, topic_source, manual_topic_data):
+    site_config = SITES[site_key]
+    topic_data = manual_topic_data if topic_source == 'Ręcznie' else get_event_registry_topics(site_config)
+    if not topic_data:
+        return "BŁĄD: brak tematu."
+    # newsowy research (może ten sam co ogólny)
+    research_data = step1_research(topic_data, site_config)
+    if not research_data:
+        return "BŁĄD researchu newsowego."
+    # generowanie newsowego artykułu
+    news_html = step_news_article(research_data, site_config, topic_data)
+    if not news_html:
+        return "BŁĄD pisania newsowego artykułu."
+    return news_html
+
 def run_generation_process(site_key, topic_source, manual_topic_data):
     """Główna funkcja wykonawcza, wywoływana przez aplikację webową."""
     site_config = SITES[site_key]
