@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup
 import openai
 import base64
 import textwrap
-import re
 
 # --- Import konfiguracji ---
 try:
@@ -32,68 +31,6 @@ except Exception as e:
     exit()
     
 # --- TRÓJETAPOWY PROCES GENEROWANIA ARTYKUŁU ---
-
-def parse_outline_to_sections(outline_str):
-    """
-    Parsuje plan artykułu wygenerowany przez AI (w HTML) i zwraca listę sekcji.
-    Każda sekcja ma: tytuł, opis (krótkie 1–2 zdania), nagłówek (`<h2>` lub `<h3>`).
-    """
-    soup = BeautifulSoup(outline_str, 'html.parser')
-    sections = []
-
-    for tag in soup.find_all(['h2', 'h3']):
-        title = tag.get_text(strip=True)
-        desc = ""
-        next_sibling = tag.find_next_sibling()
-        if next_sibling and next_sibling.name == 'p':
-            desc = next_sibling.get_text(strip=True)
-        sections.append({"tag": tag.name, "title": title, "desc": desc})
-
-    return sections
-
-def step1_research_for_section(section, topic_data):
-    """Wykonuje dogłębny research tylko dla jednej sekcji."""
-    prompt = textwrap.dedent(f"""
-        Twoim zadaniem jest przeprowadzić **dokładny, oparty na danych research** tylko do poniższej sekcji artykułu:
-
-        <{section['tag']}>{section['title']}</{section['tag']}>
-        Opis sekcji: {section['desc']}
-
-        Punkt wyjścia:
-        - Tytuł tematu: {topic_data.get('title')}
-        - URL źródłowy: {topic_data.get('url')}
-        - Kontekst wprowadzający: {topic_data.get('body_snippet')}
-
-        Znajdź:
-        - aktualne dane, raporty, liczby,
-        - tezy ekspertów i ich cytaty,
-        - kontekst historyczny i kontrowersje,
-        - konkretne informacje do tej sekcji.
-
-        Nie pisz tekstu! Wypunktuj precyzyjne informacje. 
-        Źródła muszą być wiarygodne – Perplexity, raporty, instytucje.
-    """)
-    return _call_perplexity_api(prompt)
-
-def generate_section(research_data, site_config, section, prompt_template):
-    """Generuje treść jednej sekcji artykułu na podstawie researchu i planu."""
-    prompt = textwrap.dedent(f"""
-        Twoim zadaniem jest napisać tylko jedną sekcję artykułu premium, zgodnie z poniższymi zasadami i danymi.
-
-        <h2>{section['title']}</h2>
-        Opis sekcji: {section['desc']}
-
-        --- 
-        Zasady pisania:
-        {prompt_template}
-        ---
-        Dane z researchu:
-        {research_data}
-
-        Napisz treść tej jednej sekcji w formacie HTML. Użyj nagłówka <{section['tag']}>. Zachowaj styl narracyjny, analityczny i ekspercki.
-    """)
-
-    return _call_perplexity_api(prompt)
 
 def _call_perplexity_api(prompt):
     """Pomocnicza funkcja do wywoływania API Perplexity."""
@@ -158,31 +95,29 @@ def step2_create_outline(research_data, site_config, keyword=None):
     """)
     return _call_perplexity_api(prompt)
 
-def step3_write_article(research_data_global, outline, site_config, topic_data):
-    """Tworzy artykuł sekcja po sekcji z osobnym researchem dla każdej sekcji."""
-    logging.info("--- KROK 3: Pisanie artykułu z osobnym researchem per sekcja ---")
+def step3_write_article(research_data, outline, site_config):
+    """Krok 3: AI pisze finalny artykuł, trzymając się planu i zasad, z naciskiem na styl."""
+    logging.info("--- KROK 3: Piszę finalny artykuł... To może potrwać kilka minut. ---")
     prompt_template = site_config['prompt_template']
-    sections = parse_outline_to_sections(outline)
-    final_html = ""
 
-    for idx, section in enumerate(sections):
-        logging.info(f"🔍 Sekcja {idx+1}/{len(sections)}: {section['title']}")
-        
-        # Dedykowany research sekcji
-        section_research = step1_research_for_section(section, topic_data)
-        if not section_research:
-            logging.warning(f"Błąd researchu dla sekcji: {section['title']}")
-            continue
+    final_prompt = textwrap.dedent(f"""
+        Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
+        **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty.**
 
-        # Pisanie sekcji na podstawie tego researchu
-        section_html = generate_section(section_research, site_config, section, prompt_template)
-        if not section_html:
-            logging.warning(f"Błąd generowania sekcji: {section['title']}")
-            continue
+        **ZEBRANE DANE (Użyj ich do wypełnienia treści):**
+        {research_data}
 
-        final_html += "\n" + section_html.strip() + "\n"
+        ---
+        **PLAN ARTYKUŁU (Trzymaj się go ściśle, włącznie z kreatywnymi tytułami sekcji):**
+        {outline}
+        ---
 
-    return final_html.strip()
+        **ZASADY PISANIA (Zastosuj je do tworzenia finalnego tekstu):**
+        {prompt_template}
+
+        Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`, zgodnie z przekazanym planem i wszystkimi zasadami.
+    """)
+    return _call_perplexity_api(final_prompt)
 
 
 # --- FUNKCJE POMOCNICZE ---
@@ -333,7 +268,7 @@ def run_generation_process(site_key, topic_source, manual_topic_data):
     logging.info("--- WYGENEROWANY PLAN ARTYKUŁU ---\n" + outline)
     
     # Krok 3: Pisanie
-    generated_html = step3_write_article(research_data, outline, site_config, topic_data)
+    generated_html = step3_write_article(research_data, outline, site_config)
     if not generated_html: return "BŁĄD: Krok 3 (Pisanie) nie powiódł się. Sprawdź logi."
 
     # Przetwarzanie i publikacja (reszta funkcji bez zmian)
