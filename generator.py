@@ -255,6 +255,10 @@ def step_news_article(research_data, site_config, topic_data):
         Dane do analizy:
         {research_data}
 
+        ---
+        ZASADY PISANIA:
+        {site_config['prompt_template']}
+
         Zwróć gotowy tekst w HTML, używając tylko tagów <h2>, <p>, <ul>, <li>, <strong>, <blockquote>.
     """)
     return _call_perplexity_api(prompt)
