@@ -239,7 +239,6 @@ def publish_to_wp(data_to_publish, site_config):
         logging.error(f"Odpowiedź serwera: {r.text}")
         return None
 
-# --- GŁÓWNA FUNKCJA WYKONAWCZA (dla app.py) ---
 def run_generation_process(site_key, topic_source, manual_topic_data):
     """Główna funkcja wykonawcza, wywoływana przez aplikację webową."""
     site_config = SITES[site_key]
@@ -254,8 +253,17 @@ def run_generation_process(site_key, topic_source, manual_topic_data):
     if not research_data: return "BŁĄD: Krok 1 (Research) nie powiódł się. Sprawdź logi."
     logging.info("--- WYNIK RESEARCHU ---\n" + research_data)
 
-    # Krok 2: Planowanie
-    outline = step2_create_outline(research_data, site_config)
+    # --- NOWA LOGIKA ---
+    # Sprawdzamy, czy temat jest ręczny i pobieramy słowo kluczowe
+    keyword_for_title = None
+    if topic_source == 'Ręcznie':
+        keyword_for_title = topic_data.get('title')
+        if keyword_for_title:
+            logging.info(f"Wykryto ręczne słowo kluczowe dla tytułu: '{keyword_for_title}'")
+    # ------------------
+
+    # Krok 2: Planowanie (z przekazaniem słowa kluczowego)
+    outline = step2_create_outline(research_data, site_config, keyword=keyword_for_title)
     if not outline: return "BŁĄD: Krok 2 (Planowanie) nie powiódł się. Sprawdź logi."
     logging.info("--- WYGENEROWANY PLAN ARTYKUŁU ---\n" + outline)
     
@@ -263,19 +271,17 @@ def run_generation_process(site_key, topic_source, manual_topic_data):
     generated_html = step3_write_article(research_data, outline, site_config)
     if not generated_html: return "BŁĄD: Krok 3 (Pisanie) nie powiódł się. Sprawdź logi."
 
-    # Przetwarzanie i publikacja
+    # Przetwarzanie i publikacja (reszta funkcji bez zmian)
     soup = BeautifulSoup(generated_html, 'html.parser')
     title_tag = soup.find('h2')
     post_title = title_tag.get_text(strip=True) if title_tag else topic_data.get('title', 'Brak tytułu')
     if title_tag: title_tag.decompose()
     post_content = str(soup)
     
-    # --- POPRAWKA: Dodajemy zabezpieczenie na wypadek błędu pobierania kategorii ---
     all_categories = get_all_wp_categories(site_config)
     
     if all_categories is None:
         logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej 'Bez kategorii'.")
-        # Używamy nazwy "Bez kategorii" (WordPress użyje domyślnego ID, zazwyczaj 1)
         chosen_category_name = "Bez kategorii"
         category_id = 1 
     else:
