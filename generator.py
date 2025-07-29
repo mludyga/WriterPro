@@ -37,7 +37,7 @@ def _call_perplexity_api(prompt):
     headers = {"Authorization": f"Bearer {COMMON_KEYS['PERPLEXITY_API_KEY']}", "Content-Type": "application/json"}
     payload = {"model": "sonar-pro", "messages": [{"role": "user", "content": prompt}]}
     try:
-        response = requests.post("https.api.perplexity.ai/chat/completions", headers=headers, data=json.dumps(payload), timeout=400)
+        response = requests.post("https://api.perplexity.ai/chat/completions", headers=headers, data=json.dumps(payload), timeout=400)
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
     except requests.exceptions.RequestException as e:
