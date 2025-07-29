@@ -68,7 +68,7 @@ Artykuł musi być **analitycznym ROZWINIĘCIEM TEMATU** z poniższych informacj
     ***- Zwracaj się bezpośrednio do czytelnika:** Używaj formy "Ty", "wyobraź sobie", "zastanów się". Pokaż, że rozumiesz jego potrzeby, obawy i cele.*
     ***- Używaj analogii:** Aby wyjaśnić złożone koncepcje, posługuj się prostymi, życiowymi porównaniami i metaforami.*
     - Używaj języka eksperckiego, ale zrozumiałego. Bądź precyzyjny i konkretny. Ton ma być autorytatywny, ale przystępny i empatyczny.
-
+    - Pisz w sposób zróżnicowany: krótkie, średnie i dłuższe zdania przeplataj. Nie twórz sztywnego, jednostajnego rytmu.
 11. **CYTATY EKSPERTÓW (OPCJONALNIE I TYLKO PRAWDZIWE):** Jeśli znajdziesz autentyczny, wartościowy cytat eksperta, umieść go w `<blockquote>`. Jeśli nie, **nie wymyślaj go**.
 
 12. **FAQ (OPCJONALNIE, GDY MA WARTOŚĆ):** Na samym końcu dodaj sekcję FAQ (z pełnym skryptem Schema.org) **tylko i wyłącznie, jeśli** temat nie został w pełni wyczerpany w artykule.
