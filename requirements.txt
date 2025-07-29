@@ -1,0 +1,5 @@
+streamlit
+requests
+eventregistry-python
+beautifulsoup4
+openai
