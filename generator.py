@@ -1,4 +1,4 @@
-# generator.py (wersja "Agentowa")
+# generator.py (finalna wersja "Agentowa" jako moduł)
 import json
 import time
 import logging
@@ -29,53 +29,15 @@ try:
 except Exception as e:
     logging.error(f"Nie udało się zainicjować klienta OpenAI: {e}")
     exit()
-
-# --- FUNKCJE INTERFEJSU UŻYTKOWNIKA (bez zmian) ---
-def select_portal():
-    print("Wybierz portal, na którym chcesz opublikować artykuł:")
-    sites_list = list(SITES.keys())
-    for i, site_key in enumerate(sites_list):
-        print(f"{i + 1}. {SITES[site_key]['friendly_name']}")
-    while True:
-        try:
-            choice = int(input(f"Wybierz numer (1-{len(sites_list)}): ")) - 1
-            if 0 <= choice < len(sites_list):
-                return sites_list[choice]
-            else:
-                print("Niepoprawny numer.")
-        except ValueError:
-            print("To nie jest numer.")
-
-def select_topic_source():
-    print("\nWybierz źródło tematu:")
-    print("1. Znajdź temat automatycznie (Event Registry)")
-    print("2. Wpisz temat ręcznie")
-    while True:
-        choice = input("Wybierz numer (1-2): ")
-        if choice in ['1', '2']:
-            return choice
-        else:
-            print("Niepoprawny wybór.")
-
-def get_manual_topic():
-    print("\n--- Ręczne wprowadzanie tematu ---")
-    title = input("Podaj tytuł / główną myśl artykułu: ")
-    url = input("Podaj opcjonalny URL do artykułu źródłowego (jeśli jest): ")
-    body_snippet = input("Podaj opcjonalny dodatkowy kontekst (jeśli jest): ")
-    image_url = input("Podaj opcjonalny URL do obrazka (jeśli jest): ")
-    return {
-        "title": title, "url": url, "body_snippet": body_snippet,
-        "source_name": "Dane ręczne", "image_url": image_url
-    }
     
-# --- NOWY, TRÓJETAPOWY PROCES GENEROWANIA ARTYKUŁU ---
+# --- TRÓJETAPOWY PROCES GENEROWANIA ARTYKUŁU ---
 
 def _call_perplexity_api(prompt):
     """Pomocnicza funkcja do wywoływania API Perplexity."""
     headers = {"Authorization": f"Bearer {COMMON_KEYS['PERPLEXITY_API_KEY']}", "Content-Type": "application/json"}
     payload = {"model": "sonar-pro", "messages": [{"role": "user", "content": prompt}]}
     try:
-        response = requests.post("https://api.perplexity.ai/chat/completions", headers=headers, data=json.dumps(payload), timeout=400)
+        response = requests.post("https.api.perplexity.ai/chat/completions", headers=headers, data=json.dumps(payload), timeout=400)
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
     except requests.exceptions.RequestException as e:
@@ -117,9 +79,9 @@ def step2_create_outline(research_data, site_config):
 
         **TWOJE ZADANIE:**
         1.  Zaproponuj nowy, chwytliwy i merytoryczny tytuł. Umieść go w tagu `<h2>`.
-        2.  **Stwórz unikalną strukturę artykułu.** Nie trzymaj się jednego szablonu. Dobierz sekcje i ich kolejność tak, aby jak najlepiej opowiedzieć historię i wyjaśnić temat czytelnikowi. Zacznij od leada, który ma zachęcić do dalszego czytania tekstu.
+        2.  **Stwórz unikalną strukturę artykułu.** Nie trzymaj się jednego szablonu. Dobierz sekcje i ich kolejność tak, aby jak najlepiej opowiedzieć historię i wyjaśnić temat czytelnikowi.
         3.  Zaproponuj **kreatywne i intrygujące tytuły dla poszczególnych sekcji** (`<h2>`, `<h3>`), a nie tylko generyczne opisy typu "Analiza danych".
-        4.  **Inteligentnie dobierz elementy wysokiej jakości treści.** Zastanów się, czy do TEGO KONKRETNEGO tematu pasują takie bloki jak: **tabela porównawcza**, **analiza historyczna**, **praktyczne porady** lub **box z kluczowymi informacjami**. Włącz je do planu **tylko wtedy, gdy mają sens** i realnie wzbogacają treść, a nie dlatego, że musisz.
+        4.  **Inteligentnie dobierz elementy premium.** Zastanów się, czy do TEGO KONKRETNEGO tematu pasują takie bloki jak: **tabela porównawcza**, **analiza historyczna**, **praktyczne porady** lub **box z kluczowymi informacjami**. Włącz je do planu **tylko wtedy, gdy mają sens** i realnie wzbogacają treść, a nie dlatego, że musisz.
         5.  Pod każdym nagłówkiem napisz w 1-2 zdaniach, co dokładnie zostanie w tej sekcji opisane.
 
         Zwróć tylko i wyłącznie kompletny, gotowy do realizacji plan artykułu.
@@ -129,9 +91,7 @@ def step2_create_outline(research_data, site_config):
 def step3_write_article(research_data, outline, site_config):
     """Krok 3: AI pisze finalny artykuł, trzymając się planu i zasad, z naciskiem na styl."""
     logging.info("--- KROK 3: Piszę finalny artykuł... To może potrwać kilka minut. ---")
-    
-    # Pobieramy szablon z config.py, który nadal zawiera wszystkie kluczowe zasady formatowania
-    prompt_template = SITES[site_config['site_key']]['prompt_template']
+    prompt_template = site_config['prompt_template']
 
     final_prompt = textwrap.dedent(f"""
         Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
@@ -153,13 +113,7 @@ def step3_write_article(research_data, outline, site_config):
     return _call_perplexity_api(final_prompt)
 
 
-# --- FUNKCJE POMOCNICZE (bez zmian) ---
-# ... wklej tutaj wszystkie funkcje pomocnicze z poprzedniej wersji:
-# get_auth_header, get_event_registry_topics, get_all_wp_categories, 
-# choose_category_ai, generate_tags_ai, get_or_create_term_id, 
-# upload_image_to_wp, publish_to_wp
-# Poniżej wklejam je dla kompletności.
-
+# --- FUNKCJE POMOCNICZE ---
 def get_auth_header(site_config):
     if site_config['auth_method'] == 'bearer':
         return {'Authorization': f"Bearer {site_config['wp_bearer_token']}"}
@@ -233,23 +187,33 @@ def get_or_create_term_id(name, term_type, site_config):
         logging.error(f"Błąd podczas obsługi terminu '{name}': {e}")
         return None
 
-def upload_image_to_wp(image_url, article_title, site_config):
-    if not image_url: return None
-    logging.info(f"Przesyłanie obrazka: {image_url}")
+def upload_image_to_wp(image_source, article_title, site_config):
+    if not image_source: return None
+    img_content, content_type = None, 'image/jpeg'
+    if isinstance(image_source, str) and image_source.startswith('http'):
+        logging.info(f"Pobieranie obrazka z URL: {image_source}")
+        try:
+            img_response = requests.get(image_source, stream=True, timeout=20)
+            img_response.raise_for_status()
+            img_content, content_type = img_response.content, img_response.headers.get('content-type', 'image/jpeg')
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Błąd podczas pobierania obrazka z URL: {e}")
+            return None
+    else:
+        logging.info("Przetwarzanie wgranego obrazka...")
+        img_content, content_type = image_source.getvalue(), image_source.type
     try:
-        img_response = requests.get(image_url, stream=True, timeout=20)
-        img_response.raise_for_status()
         headers = get_auth_header(site_config)
         ascii_title = article_title.encode('ascii', 'ignore').decode('ascii')
         safe_filename_base = ''.join(c for c in ascii_title if c.isalnum() or c in " ").strip().replace(' ', '_')
         filename = f"{safe_filename_base[:50]}_img.jpg"
         headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-        headers['Content-Type'] = img_response.headers.get('content-type', 'image/jpeg')
-        wp_r = requests.post(f"{site_config['wp_api_url_base']}/media", headers=headers, data=img_response.content)
+        headers['Content-Type'] = content_type
+        wp_r = requests.post(f"{site_config['wp_api_url_base']}/media", headers=headers, data=img_content)
         wp_r.raise_for_status()
         logging.info("Obrazek przesłany pomyślnie.")
         return wp_r.json().get("id")
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         logging.error(f"Błąd podczas przesyłania obrazka do WP: {e}")
         return None
 
@@ -268,55 +232,45 @@ def publish_to_wp(data_to_publish, site_config):
         logging.error(f"Odpowiedź serwera: {r.text}")
         return None
 
-# --- GŁÓWNA PĘTLA PROGRAMU (w nowej, agentowej wersji) ---
-def main():
-    chosen_site_key = select_portal()
-    site_config = SITES[chosen_site_key]
-    site_config['site_key'] = chosen_site_key # Dodajemy klucz do configa dla łatwiejszego dostępu
+# --- GŁÓWNA FUNKCJA WYKONAWCZA (dla app.py) ---
+def run_generation_process(site_key, topic_source, manual_topic_data):
+    """Główna funkcja wykonawcza, wywoływana przez aplikację webową."""
+    site_config = SITES[site_key]
+    site_config['site_key'] = site_key
 
-    topic_source = select_topic_source()
-    topic_data = get_manual_topic() if topic_source == '2' else get_event_registry_topics(site_config)
+    topic_data = manual_topic_data if topic_source == 'Ręcznie' else get_event_registry_topics(site_config)
     if not topic_data:
-        print("Nie udało się uzyskać tematu. Koniec pracy.")
-        return
+        return "BŁĄD: Nie udało się uzyskać tematu. Sprawdź Event Registry lub dane wprowadzone ręcznie."
 
-    # === NOWY PROCES TRÓJETAPOWY ===
+    # Krok 1: Research
     research_data = step1_research(topic_data, site_config)
-    if not research_data:
-        print("Nie udało się przeprowadzić researchu. Koniec pracy.")
-        return
+    if not research_data: return "BŁĄD: Krok 1 (Research) nie powiódł się. Sprawdź logi."
     
+    # W aplikacji webowej możemy chcieć pokazać ten wynik - na razie idziemy dalej
+    logging.info("--- WYNIK RESEARCHU ---\n" + research_data)
+
+    # Krok 2: Planowanie
     outline = step2_create_outline(research_data, site_config)
-    if not outline:
-        print("Nie udało się stworzyć planu artykułu. Koniec pracy.")
-        return
-
-    print("\n--- WYGENEROWANY PLAN ARTYKUŁU ---")
-    print(outline)
-    print("------------------------------------")
+    if not outline: return "BŁĄD: Krok 2 (Planowanie) nie powiódł się. Sprawdź logi."
     
-    proceed = input("Czy kontynuować pisanie artykułu na podstawie tego planu? (t/n): ").lower()
-    if proceed != 't':
-        print("Przerwano proces na życzenie użytkownika.")
-        return
-        
+    # W aplikacji webowej pokazujemy plan i czekamy na akcję użytkownika.
+    # W tej wersji kodu, którą wkleiłeś, akceptacja jest w app.py, więc idziemy dalej.
+    logging.info("--- WYGENEROWANY PLAN ARTYKUŁU ---\n" + outline)
+    
+    # Krok 3: Pisanie
     generated_html = step3_write_article(research_data, outline, site_config)
-    if not generated_html:
-        print("Nie udało się napisać finalnego artykułu. Koniec pracy.")
-        return
-    
-    # === KONIEC NOWEGO PROCESU, reszta jak wcześniej ===
+    if not generated_html: return "BŁĄD: Krok 3 (Pisanie) nie powiódł się. Sprawdź logi."
 
+    # Przetwarzanie i publikacja
     soup = BeautifulSoup(generated_html, 'html.parser')
     title_tag = soup.find('h2')
-    post_title = title_tag.get_text(strip=True) if title_tag else topic_data['title']
+    post_title = title_tag.get_text(strip=True) if title_tag else topic_data.get('title', 'Brak tytułu')
     if title_tag: title_tag.decompose()
     post_content = str(soup)
-    logging.info(f"Wygenerowano nowy tytuł: '{post_title}'")
-
+    
     all_categories = get_all_wp_categories(site_config)
     chosen_category_name = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-    category_id = all_categories.get(chosen_category_name)
+    category_id = all_categories.get(chosen_category_name) if all_categories else None
     
     tags_list = generate_tags_ai(post_title, post_content)
     tag_ids = [get_or_create_term_id(tag, "tags", site_config) for tag in tags_list]
@@ -324,11 +278,11 @@ def main():
     featured_media_id = upload_image_to_wp(topic_data.get('image_url'), post_title, site_config)
 
     data_to_publish = {"title": post_title, "content": post_content, "status": "publish", "categories": [category_id] if category_id else [], "tags": [tid for tid in tag_ids if tid]}
-    if featured_media_id:
-        data_to_publish['featured_media'] = featured_media_id
+    if featured_media_id: data_to_publish['featured_media'] = featured_media_id
 
-    publish_to_wp(data_to_publish, site_config)
-    logging.info("--- Proces zakończony pomyślnie! ---")
-
-if __name__ == "__main__":
-    main()
+    result = publish_to_wp(data_to_publish, site_config)
+    
+    if result and result.get('link'):
+        return f"Artykuł opublikowany pomyślnie! Link: {result.get('link')}"
+    else:
+        return "BŁĄD: Publikacja nie powiodła się. Sprawdź logi."
