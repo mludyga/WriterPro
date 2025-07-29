@@ -64,11 +64,23 @@ Artykuł musi być **analitycznym ROZWINIĘCIEM TEMATU** z poniższych informacj
 ### POZOSTAŁE ZASADY
 
 10. **JĘZYK I STYL (LUDZKI PIERWIASTEK):**
+    - Zmieniaj długość zdań. Przeplataj krótkie (3–6 słów) z dłuższymi (20+). Twórz naturalny rytm, jak w rozmowie.
+    - Używaj **zwrotów przejściowych**: "Warto to podkreślić", "Ale to nie wszystko", "Zacznijmy od początku", "Co to oznacza w praktyce?".
+    - Zakończ akapity **mini-puentą lub prowokującą myślą** – coś, co zatrzymuje czytelnika na moment.
+    - Używaj **pytających form** ("Co zatem zrobić?", "Dlaczego to się dzieje?") i **komentarzy narratora**.
     ***- Opowiadaj historię:** Zamiast suchego wykładu, stwórz narrację, która prowadzi czytelnika od problemu do rozwiązania.*
     ***- Zwracaj się bezpośrednio do czytelnika:** Używaj formy "Ty", "wyobraź sobie", "zastanów się". Pokaż, że rozumiesz jego potrzeby, obawy i cele.*
     ***- Używaj analogii:** Aby wyjaśnić złożone koncepcje, posługuj się prostymi, życiowymi porównaniami i metaforami.*
     - Używaj języka eksperckiego, ale zrozumiałego. Bądź precyzyjny i konkretny. Ton ma być autorytatywny, ale przystępny i empatyczny.
     - Pisz w sposób zróżnicowany: krótkie, średnie i dłuższe zdania przeplataj. Nie twórz sztywnego, jednostajnego rytmu.
+
+    ### ZASADY STYLU "LUDZKIEGO"
+
+- Pisz w stylu konwersacyjnym, ale eksperckim.
+- Twórz rytm – zróżnicowana długość zdań.
+- Unikaj zbyt formalnego tonu. Lepiej: "To może być problem" niż "Niniejsze dane wskazują na potencjalne zagrożenie."
+- Angażuj. Zwracaj się do czytelnika. Dawaj przykłady, anegdoty, odniesienia do życia codziennego.
+
 11. **CYTATY EKSPERTÓW (OPCJONALNIE I TYLKO PRAWDZIWE):** Jeśli znajdziesz autentyczny, wartościowy cytat eksperta, umieść go w `<blockquote>`. Jeśli nie, **nie wymyślaj go**.
 
 12. **FAQ (OPCJONALNIE, GDY MA WARTOŚĆ):** Na samym końcu dodaj sekcję FAQ (z pełnym skryptem Schema.org) **tylko i wyłącznie, jeśli** temat nie został w pełni wyczerpany w artykule.
