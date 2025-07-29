@@ -333,7 +333,7 @@ def run_generation_process(site_key, topic_source, manual_topic_data):
     logging.info("--- WYGENEROWANY PLAN ARTYKUŁU ---\n" + outline)
     
     # Krok 3: Pisanie
-    generated_html = step3_write_article(research_data, outline, site_config)
+    generated_html = step3_write_article(research_data, outline, site_config, topic_data)
     if not generated_html: return "BŁĄD: Krok 3 (Pisanie) nie powiódł się. Sprawdź logi."
 
     # Przetwarzanie i publikacja (reszta funkcji bez zmian)
