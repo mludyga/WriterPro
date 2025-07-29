@@ -51,6 +51,30 @@ def parse_outline_to_sections(outline_str):
 
     return sections
 
+def step1_research_for_section(section, topic_data):
+    """Wykonuje dogłębny research tylko dla jednej sekcji."""
+    prompt = textwrap.dedent(f"""
+        Twoim zadaniem jest przeprowadzić **dokładny, oparty na danych research** tylko do poniższej sekcji artykułu:
+
+        <{section['tag']}>{section['title']}</{section['tag']}>
+        Opis sekcji: {section['desc']}
+
+        Punkt wyjścia:
+        - Tytuł tematu: {topic_data.get('title')}
+        - URL źródłowy: {topic_data.get('url')}
+        - Kontekst wprowadzający: {topic_data.get('body_snippet')}
+
+        Znajdź:
+        - aktualne dane, raporty, liczby,
+        - tezy ekspertów i ich cytaty,
+        - kontekst historyczny i kontrowersje,
+        - konkretne informacje do tej sekcji.
+
+        Nie pisz tekstu! Wypunktuj precyzyjne informacje. 
+        Źródła muszą być wiarygodne – Perplexity, raporty, instytucje.
+    """)
+    return _call_perplexity_api(prompt)
+
 def generate_section(research_data, site_config, section, prompt_template):
     """Generuje treść jednej sekcji artykułu na podstawie researchu i planu."""
     prompt = textwrap.dedent(f"""
