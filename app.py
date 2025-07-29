@@ -1,15 +1,14 @@
-# app.py (poprawiona wersja z użyciem st.session_state)
+# app.py (z obsługą trybu Premium i Newsowego)
 import streamlit as st
 from config import SITES
-from generator import run_generation_process
+from generator import run_generation_process, run_news_process
 
 st.set_page_config(page_title="Generator Treści AI", layout="wide")
 
-st.title("🤖 Generator Treści Premium")
-st.write("Narzędzie do tworzenia i publikacji artykułów na wybranych portalach, oparte o model agentowy (Research -> Plan -> Pisanie).")
+st.title("🤖 Generator Treści AI")
+st.write("Narzędzie do tworzenia i publikacji artykułów na wybranych portalach: tryb Premium (długi) lub Newsowy (krótki komentarz).")
 
 # --- Inicjalizacja Pamięci Sesji ---
-# To sprawi, że Streamlit będzie pamiętał dane tematu między kliknięciami
 if 'manual_topic_data' not in st.session_state:
     st.session_state.manual_topic_data = {}
 
@@ -17,8 +16,7 @@ if 'manual_topic_data' not in st.session_state:
 st.header("Krok 1: Wybierz portal")
 friendly_names = {key: SITES[key]['friendly_name'] for key in SITES}
 chosen_friendly_name = st.selectbox("Portal docelowy:", options=friendly_names.values())
-site_key = [key for key, name in friendly_names.items() if name == chosen_friendly_name][0]
-
+site_key = [k for k, v in friendly_names.items() if v == chosen_friendly_name][0]
 
 # --- KROK 2: Wybór źródła tematu ---
 st.header("Krok 2: Wybierz temat")
@@ -31,31 +29,43 @@ if topic_source == 'Ręcznie':
         url = st.text_input("Opcjonalny URL do artykułu źródłowego:", value=st.session_state.manual_topic_data.get('url', ''))
         body_snippet = st.text_area("Opcjonalny dodatkowy kontekst / fragment:", value=st.session_state.manual_topic_data.get('body_snippet', ''))
         uploaded_image = st.file_uploader("Wgraj obrazek (opcjonalnie)", type=['jpg', 'jpeg', 'png', 'webp'])
-        
         submitted = st.form_submit_button("Zatwierdź temat")
-        
         if submitted:
-            # Zapisujemy dane do pamięci sesji, a nie do tymczasowej zmiennej
             st.session_state.manual_topic_data = {
-                "title": title, "url": url, "body_snippet": body_snippet,
-                "source_name": "Dane ręczne", "image_url": uploaded_image
+                "title": title,
+                "url": url,
+                "body_snippet": body_snippet,
+                "source_name": "Dane ręczne",
+                "image_url": uploaded_image
             }
             st.success("Temat został zatwierdzony! Możesz teraz uruchomić generowanie.")
 
+# --- KROK 2a: Wybór typu artykułu ---
+st.header("Krok 2a: Wybierz typ artykułu")
+article_type = st.radio(
+    "Jakiego rodzaju artykuł chcesz wygenerować?",
+    ("Premium (długi, z planem)", "Newsowy (krótki komentarz)"),
+    horizontal=True
+)
 
 # --- KROK 3: Generowanie ---
 st.header("Krok 3: Generuj!")
 if st.button("🚀 Uruchom proces generowania"):
-    # Od teraz sprawdzamy dane w pamięci sesji
+    # Walidacja tematu
     if topic_source == 'Ręcznie' and not st.session_state.manual_topic_data.get('title'):
         st.error("Przy ręcznym wprowadzaniu temat jest wymagany! Wypełnij formularz powyżej i kliknij 'Zatwierdź temat'.")
     else:
-        with st.spinner("Trwa proces generowania... To może zająć od 3 do 5 minut. Nie zamykaj tej karty."):
-            # Przekazujemy dane z pamięci sesji do funkcji generującej
-            result_message = run_generation_process(site_key, topic_source.split(' ')[0], st.session_state.manual_topic_data)
-            
-            if "BŁĄD" in result_message:
-                st.error(result_message)
+        with st.spinner("Trwa proces generowania... To może zająć od 1 do 3 minut. Nie zamykaj tej karty."):
+            if article_type.startswith("Premium"):
+                result = run_generation_process(site_key, topic_source.split(' ')[0], st.session_state.manual_topic_data)
             else:
-                st.success(result_message)
+                result = run_news_process(site_key, topic_source.split(' ')[0], st.session_state.manual_topic_data)
+
+            if not result:
+                st.error("BŁĄD: Proces generowania nie powiódł się.")
+            elif "BŁĄD" in result:
+                st.error(result)
+            else:
+                st.success("Gotowe! Oto wygenerowany artykuł:")
+                st.write(result)
                 st.balloons()
