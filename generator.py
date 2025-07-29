@@ -1,4 +1,4 @@
-# generator.py (finalna wersja "Agentowa" jako moduł)
+rz# generator.py (finalna wersja "Agentowa" jako moduł)
 import json
 import time
 import logging
@@ -244,13 +244,13 @@ def step_news_article(research_data, site_config, topic_data):
     Generuje krótki artykuł newsowy na podstawie researchu:
     - wypunktowane kluczowe dane,
     - 1–2 cytaty ekspertów,
-    - krótki komentarz redakcyjny.
+    - krótki komentarz i opis sytuacji.
     """
     prompt = textwrap.dedent(f"""
         Jesteś dziennikarzem newsowym. Masz zebrać i skondensować poniższe informacje w **krótki artykuł (300–400 słów)**:
         - Najważniejsze fakty i liczby dotyczące: "{topic_data.get('title')}" ({topic_data.get('url')})
-        - Opinie 2 ekspertów (prawdziwe cytaty).
-        - Krótki komentarz redaktora podsumowujący znaczenie tych wydarzeń.
+        - Opinie ekspertów (prawdziwe cytaty - jeśli są).
+        - własne podsumowanie artykułu z nieformalną puentą, lub komentarzem. Obiektywnie. Nastrój w zależności od tematyki artykułu.
 
         Dane do analizy:
         {research_data}
