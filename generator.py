@@ -1,4 +1,3 @@
-rz# generator.py (finalna wersja "Agentowa" jako moduł)
 import json
 import time
 import logging
