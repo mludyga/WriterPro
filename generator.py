@@ -158,23 +158,31 @@ def step2_create_outline(research_data, site_config, keyword=None):
     """)
     return _call_perplexity_api(prompt)
 
-def step3_write_article(research_data, outline, site_config):
-    """Tworzy artykuł sekcja po sekcji zgodnie z planem."""
-    logging.info("--- KROK 3: Pisanie artykułu sekcja po sekcji ---")
+def step3_write_article(research_data_global, outline, site_config, topic_data):
+    """Tworzy artykuł sekcja po sekcji z osobnym researchem dla każdej sekcji."""
+    logging.info("--- KROK 3: Pisanie artykułu z osobnym researchem per sekcja ---")
     prompt_template = site_config['prompt_template']
-
     sections = parse_outline_to_sections(outline)
-    full_article_html = ""
-    
-    for idx, section in enumerate(sections):
-        logging.info(f"📝 Generowanie sekcji {idx + 1}/{len(sections)}: {section['title']}")
-        section_html = generate_section(research_data, site_config, section, prompt_template)
-        if not section_html:
-            logging.warning(f"⚠️ Sekcja '{section['title']}' nie została wygenerowana.")
-            continue
-        full_article_html += f"\n{section_html.strip()}\n"
+    final_html = ""
 
-    return full_article_html.strip()
+    for idx, section in enumerate(sections):
+        logging.info(f"🔍 Sekcja {idx+1}/{len(sections)}: {section['title']}")
+        
+        # Dedykowany research sekcji
+        section_research = step1_research_for_section(section, topic_data)
+        if not section_research:
+            logging.warning(f"Błąd researchu dla sekcji: {section['title']}")
+            continue
+
+        # Pisanie sekcji na podstawie tego researchu
+        section_html = generate_section(section_research, site_config, section, prompt_template)
+        if not section_html:
+            logging.warning(f"Błąd generowania sekcji: {section['title']}")
+            continue
+
+        final_html += "\n" + section_html.strip() + "\n"
+
+    return final_html.strip()
 
 
 # --- FUNKCJE POMOCNICZE ---
