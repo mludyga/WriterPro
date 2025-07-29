@@ -1,5 +1,5 @@
 streamlit
 requests
-eventregistry-python
+eventregistry
 beautifulsoup4
 openai
