@@ -48,7 +48,7 @@ def step1_research(topic_data, site_config):
     """Krok 1: AI przeprowadza research i zbiera 'surowe' dane oraz elementy narracyjne."""
     logging.info("--- KROK 1: Rozpoczynam research i syntezę danych... ---")
     prompt = textwrap.dedent(f"""
-        Twoim zadaniem jest przeprowadzenie dogłębnego researchu na temat z poniższych danych. Przeanalizuj podany URL i znajdź dodatkowe, wiarygodne źródła.
+        Twoim zadaniem jest przeprowadzenie dogłębnego researchu na temat z poniższych danych. Przeanalizuj podany URL i/lub tematykę i znajdź dodatkowe, wiarygodne źródła.
         **NIE PISZ ARTYKUŁU.** Twoim celem jest wyłącznie zebranie i przedstawienie kluczowych informacji.
 
         **TEMAT DO ANALIZY:**
@@ -58,7 +58,7 @@ def step1_research(topic_data, site_config):
 
         **ZNAJDŹ I WYPISZ W PUNKTACH:**
         - Kluczowe fakty, liczby, statystyki.
-        - Nazwiska ekspertów i ich tezy.
+        - Nazwiska ekspertów i ich tezy. Także cytaty.
         - Ważne daty i nazwy oficjalnych dokumentów lub raportów.
         - Główne argumenty "za" i "przeciw" (jeśli dotyczy).
         - Potencjalny materiał do tabeli porównawczej.
@@ -83,6 +83,7 @@ def step2_create_outline(research_data, site_config):
         3.  Zaproponuj **kreatywne i intrygujące tytuły dla poszczególnych sekcji** (`<h2>`, `<h3>`), a nie tylko generyczne opisy typu "Analiza danych".
         4.  **Inteligentnie dobierz elementy premium.** Zastanów się, czy do TEGO KONKRETNEGO tematu pasują takie bloki jak: **tabela porównawcza**, **analiza historyczna**, **praktyczne porady** lub **box z kluczowymi informacjami**. Włącz je do planu **tylko wtedy, gdy mają sens** i realnie wzbogacają treść, a nie dlatego, że musisz.
         5.  Pod każdym nagłówkiem napisz w 1-2 zdaniach, co dokładnie zostanie w tej sekcji opisane.
+        6. Nie używaj w podtytułach słów: "Wstęp", "Zakończenie", "Prolog", "Epilog". Czytelne nagłówki tylko.
 
         Zwróć tylko i wyłącznie kompletny, gotowy do realizacji plan artykułu.
     """)
