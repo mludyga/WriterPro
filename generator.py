@@ -260,19 +260,67 @@ def step_news_article(research_data, site_config, topic_data):
     return _call_perplexity_api(prompt)
 
 def run_news_process(site_key, topic_source, manual_topic_data):
+    """
+    Workflow dla newsowego artykułu łącznie z publikacją na WP.
+    """
     site_config = SITES[site_key]
+    site_config['site_key'] = site_key
+
+    # Pobierz dane tematu
     topic_data = manual_topic_data if topic_source == 'Ręcznie' else get_event_registry_topics(site_config)
     if not topic_data:
-        return "BŁĄD: brak tematu."
-    # newsowy research (może ten sam co ogólny)
+        return "BŁĄD: Nie udało się uzyskać tematu."
+
+    # Newsowy research
     research_data = step1_research(topic_data, site_config)
     if not research_data:
-        return "BŁĄD researchu newsowego."
-    # generowanie newsowego artykułu
+        return "BŁĄD: Research nie powiódł się."
+
+    # Generowanie krótkiego artykułu newsowego
     news_html = step_news_article(research_data, site_config, topic_data)
     if not news_html:
-        return "BŁĄD pisania newsowego artykułu."
-    return news_html
+        return "BŁĄD: Pisanie newsowego artykułu nie powiodło się."
+
+    # Parsowanie i przygotowanie do publikacji
+    soup = BeautifulSoup(news_html, 'html.parser')
+    title_tag = soup.find('h2')
+    post_title = title_tag.get_text(strip=True) if title_tag else topic_data.get('title', 'Brak tytułu')
+    if title_tag:
+        title_tag.decompose()
+    post_content = str(soup)
+
+    # Kategorie
+    all_categories = get_all_wp_categories(site_config)
+    if all_categories is None:
+        category_id = 1
+    else:
+        chosen_cat = choose_category_ai(post_title, post_content, list(all_categories.keys()))
+        category_id = all_categories.get(chosen_cat, 1)
+
+    # Tagi
+    tags_list = generate_tags_ai(post_title, post_content)
+    tag_ids = [get_or_create_term_id(tag, 'tags', site_config) for tag in tags_list]
+
+    # Obraz wyróżniony
+    featured_media_id = upload_image_to_wp(topic_data.get('image_url'), post_title, site_config)
+
+    # Przygotowanie payloadu
+    data_to_publish = {
+        'title': post_title,
+        'content': post_content,
+        'status': 'publish',
+        'categories': [category_id],
+        'tags': [tid for tid in tag_ids if tid]
+    }
+    if featured_media_id:
+        data_to_publish['featured_media'] = featured_media_id
+
+    # Publikacja
+    result = publish_to_wp(data_to_publish, site_config)
+    if result and result.get('link'):
+        return f"Artykuł newsowy opublikowany! Link: {result.get('link')}"
+    else:
+        return "BŁĄD: Publikacja newsowego artykułu nie powiodła się."
 
 def run_generation_process(site_key, topic_source, manual_topic_data):
     """Główna funkcja wykonawcza, wywoływana przez aplikację webową."""
