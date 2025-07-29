@@ -245,16 +245,11 @@ def run_generation_process(site_key, topic_source, manual_topic_data):
     # Krok 1: Research
     research_data = step1_research(topic_data, site_config)
     if not research_data: return "BŁĄD: Krok 1 (Research) nie powiódł się. Sprawdź logi."
-    
-    # W aplikacji webowej możemy chcieć pokazać ten wynik - na razie idziemy dalej
     logging.info("--- WYNIK RESEARCHU ---\n" + research_data)
 
     # Krok 2: Planowanie
     outline = step2_create_outline(research_data, site_config)
     if not outline: return "BŁĄD: Krok 2 (Planowanie) nie powiódł się. Sprawdź logi."
-    
-    # W aplikacji webowej pokazujemy plan i czekamy na akcję użytkownika.
-    # W tej wersji kodu, którą wkleiłeś, akceptacja jest w app.py, więc idziemy dalej.
     logging.info("--- WYGENEROWANY PLAN ARTYKUŁU ---\n" + outline)
     
     # Krok 3: Pisanie
@@ -268,9 +263,17 @@ def run_generation_process(site_key, topic_source, manual_topic_data):
     if title_tag: title_tag.decompose()
     post_content = str(soup)
     
+    # --- POPRAWKA: Dodajemy zabezpieczenie na wypadek błędu pobierania kategorii ---
     all_categories = get_all_wp_categories(site_config)
-    chosen_category_name = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-    category_id = all_categories.get(chosen_category_name) if all_categories else None
+    
+    if all_categories is None:
+        logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej 'Bez kategorii'.")
+        # Używamy nazwy "Bez kategorii" (WordPress użyje domyślnego ID, zazwyczaj 1)
+        chosen_category_name = "Bez kategorii"
+        category_id = 1 
+    else:
+        chosen_category_name = choose_category_ai(post_title, post_content, list(all_categories.keys()))
+        category_id = all_categories.get(chosen_category_name)
     
     tags_list = generate_tags_ai(post_title, post_content)
     tag_ids = [get_or_create_term_id(tag, "tags", site_config) for tag in tags_list]
