@@ -68,9 +68,15 @@ def step1_research(topic_data, site_config):
     """)
     return _call_perplexity_api(prompt)
 
-def step2_create_outline(research_data, site_config):
+def step2_create_outline(research_data, site_config, keyword=None):
     """Krok 2: AI tworzy kreatywny i zhumanizowany plan artykułu."""
     logging.info("--- KROK 2: Tworzę kreatywny i szczegółowy plan artykułu... ---")
+
+    # Dynamiczne tworzenie instrukcji dotyczącej tytułu
+    title_instruction = "1.  Zaproponuj nowy, chwytliwy i merytoryczny tytuł. Najlepiej jednak, by słowo kluczowe znalazło się w tytule, to ważne pod SEO. Umieść go w tagu `<h2>`."
+    if keyword:
+        title_instruction = f"1.  Zaproponuj nowy, chwytliwy i merytoryczny tytuł. **WARUNEK KONIECZNY:** Tytuł musi zawierać dokładną frazę kluczową: '{keyword}'. To jest najważniejsze dla SEO. Umieść gotowy tytuł w tagu `<h2>`."
+
     prompt = textwrap.dedent(f"""
         Na podstawie poniższej syntezy danych, stwórz **kreatywny, angażujący i logiczny plan artykułu premium** dla portalu {site_config['friendly_name']}.
 
@@ -78,12 +84,12 @@ def step2_create_outline(research_data, site_config):
         {research_data}
 
         **TWOJE ZADANIE:**
-        1.  Zaproponuj nowy, chwytliwy i merytoryczny tytuł. Najlepiej jednak, by słowo kluczowe znalazło się w tytule, to ważne pod SEO. Umieść go w tagu `<h2>`.
+        {title_instruction}
         2.  **Stwórz unikalną strukturę artykułu.** Nie trzymaj się jednego szablonu. Dobierz sekcje i ich kolejność tak, aby jak najlepiej opowiedzieć historię i wyjaśnić temat czytelnikowi.
         3.  Zaproponuj **kreatywne i intrygujące tytuły dla poszczególnych sekcji** (`<h2>`, `<h3>`), a nie tylko generyczne opisy typu "Analiza danych".
         4.  **Inteligentnie dobierz elementy z bardzo wartościowym contentem.** Zastanów się, czy do TEGO KONKRETNEGO tematu pasują takie bloki jak: **tabela porównawcza**, **analiza historyczna**, **praktyczne porady** lub **box z kluczowymi informacjami**. Włącz je do planu **tylko wtedy, gdy mają sens** i realnie wzbogacają treść, a nie dlatego, że musisz.
         5.  Pod każdym nagłówkiem napisz w 1-2 zdaniach, co dokładnie zostanie w tej sekcji opisane.
-        6. Nie używaj w podtytułach słów: "Wstęp", "Zakończenie", "Prolog", "Epilog" "Premium", "Box". Czytelne nagłówki tylko, naturalnie wplecione.
+        6.  Nie używaj w podtytułach słów: "Wstęp", "Zakończenie", "Prolog", "Epilog" "Premium", "Box". Czytelne nagłówki tylko, naturalnie wplecione.
 
         Zwróć tylko i wyłącznie kompletny, gotowy do realizacji plan artykułu.
     """)
