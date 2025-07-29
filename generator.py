@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 import openai
 import base64
 import textwrap
+import re
 
 # --- Import konfiguracji ---
 try:
@@ -31,6 +32,44 @@ except Exception as e:
     exit()
     
 # --- TRÓJETAPOWY PROCES GENEROWANIA ARTYKUŁU ---
+
+def parse_outline_to_sections(outline_str):
+    """
+    Parsuje plan artykułu wygenerowany przez AI (w HTML) i zwraca listę sekcji.
+    Każda sekcja ma: tytuł, opis (krótkie 1–2 zdania), nagłówek (`<h2>` lub `<h3>`).
+    """
+    soup = BeautifulSoup(outline_str, 'html.parser')
+    sections = []
+
+    for tag in soup.find_all(['h2', 'h3']):
+        title = tag.get_text(strip=True)
+        desc = ""
+        next_sibling = tag.find_next_sibling()
+        if next_sibling and next_sibling.name == 'p':
+            desc = next_sibling.get_text(strip=True)
+        sections.append({"tag": tag.name, "title": title, "desc": desc})
+
+    return sections
+
+def generate_section(research_data, site_config, section, prompt_template):
+    """Generuje treść jednej sekcji artykułu na podstawie researchu i planu."""
+    prompt = textwrap.dedent(f"""
+        Twoim zadaniem jest napisać tylko jedną sekcję artykułu premium, zgodnie z poniższymi zasadami i danymi.
+
+        <h2>{section['title']}</h2>
+        Opis sekcji: {section['desc']}
+
+        --- 
+        Zasady pisania:
+        {prompt_template}
+        ---
+        Dane z researchu:
+        {research_data}
+
+        Napisz treść tej jednej sekcji w formacie HTML. Użyj nagłówka <{section['tag']}>. Zachowaj styl narracyjny, analityczny i ekspercki.
+    """)
+
+    return _call_perplexity_api(prompt)
 
 def _call_perplexity_api(prompt):
     """Pomocnicza funkcja do wywoływania API Perplexity."""
@@ -96,28 +135,22 @@ def step2_create_outline(research_data, site_config, keyword=None):
     return _call_perplexity_api(prompt)
 
 def step3_write_article(research_data, outline, site_config):
-    """Krok 3: AI pisze finalny artykuł, trzymając się planu i zasad, z naciskiem na styl."""
-    logging.info("--- KROK 3: Piszę finalny artykuł... To może potrwać kilka minut. ---")
+    """Tworzy artykuł sekcja po sekcji zgodnie z planem."""
+    logging.info("--- KROK 3: Pisanie artykułu sekcja po sekcji ---")
     prompt_template = site_config['prompt_template']
 
-    final_prompt = textwrap.dedent(f"""
-        Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
-        **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty.**
+    sections = parse_outline_to_sections(outline)
+    full_article_html = ""
+    
+    for idx, section in enumerate(sections):
+        logging.info(f"📝 Generowanie sekcji {idx + 1}/{len(sections)}: {section['title']}")
+        section_html = generate_section(research_data, site_config, section, prompt_template)
+        if not section_html:
+            logging.warning(f"⚠️ Sekcja '{section['title']}' nie została wygenerowana.")
+            continue
+        full_article_html += f"\n{section_html.strip()}\n"
 
-        **ZEBRANE DANE (Użyj ich do wypełnienia treści):**
-        {research_data}
-
-        ---
-        **PLAN ARTYKUŁU (Trzymaj się go ściśle, włącznie z kreatywnymi tytułami sekcji):**
-        {outline}
-        ---
-
-        **ZASADY PISANIA (Zastosuj je do tworzenia finalnego tekstu):**
-        {prompt_template}
-
-        Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`, zgodnie z przekazanym planem i wszystkimi zasadami.
-    """)
-    return _call_perplexity_api(final_prompt)
+    return full_article_html.strip()
 
 
 # --- FUNKCJE POMOCNICZE ---
