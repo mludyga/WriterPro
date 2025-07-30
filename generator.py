@@ -193,7 +193,32 @@ def get_event_registry_topics(site_config):
     logging.info("Pobieranie tematów z EventRegistry...")
     try:
         er = EventRegistry(apiKey=site_config['event_registry_key'])
-        query = QueryArticlesIter(conceptUri=site_config['er_concept_uri'], lang="pol", dateStart=datetime.now().date() - timedelta(days=3))
+        date_start = (datetime.now().date() - timedelta(days=3)).isoformat()
+        date_end   = datetime.now().date().isoformat()
+
+        complex_query = {
+          "$query": {
+            "$and": [
+              {
+                "$or": [
+                  {"conceptUri": uri} for uri in site_config['er_concept_uris']
+                ]
+              },
+              {"dateStart": date_start, "dateEnd": date_end, "lang": "pol"}
+            ]
+          }
+        }
+
+        er = EventRegistry(apiKey=site_config['event_registry_key'])
+        qiter = QueryArticlesIter.initWithComplexQuery(complex_query)
+        for article in qiter.execQuery(er, maxItems=1):
+            return {
+              "title": article.get("title"),
+              "body_snippet": article.get("body", "")[:700],
+              "url": article.get("url"),
+              "image_url": article.get("image"),
+              "source_name": article.get("source", {}).get("title")
+            }
         for article in query.execQuery(er, sortBy="rel", maxItems=1):
             return {"title": article.get("title"), "body_snippet": article.get("body", "")[:700], "source_name": article.get("source", {}).get("title"), "url": article.get("url"), "image_url": article.get("image")}
         return None
