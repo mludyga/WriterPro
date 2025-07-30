@@ -148,6 +148,7 @@ def step3_write_article(research_data, outline, site_config):
     logging.info("--- KROK 3: Piszę finalny artykuł... To może potrwać kilka minut. ---")
     prompt_template = site_config['prompt_template']
 
+    # Bazowy prompt
     final_prompt = textwrap.dedent(f"""
         Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
         **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty. Jedynie na początku, w pierwszym akapicie zrób typowy lead, aby tam konkretne informacje zamieścić**
@@ -162,9 +163,20 @@ def step3_write_article(research_data, outline, site_config):
 
         **ZASADY PISANIA (Zastosuj je do tworzenia finalnego tekstu):**
         {prompt_template}
-
-        Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`, zgodnie z przekazanym planem i wszystkimi zasadami.
     """)
+
+    # Dodajemy tryb rozszerzony, jeśli aktywny
+    if site_config.get("writing_mode") == "extended":
+        final_prompt += textwrap.dedent("""
+            ---
+            **DODATKOWE INSTRUKCJE (TYLKO jeśli mają wartość merytoryczną):**
+            - Jeśli w źródłach znajdziesz treści z YouTube / Facebook / X (Twitter), które wzbogacają artykuł, dodaj je w treści jako cytowany link (np. https://www.youtube.com/watch?v=...) z krótkim opisem kontekstu.
+            - Jeżeli znajdziesz dobrze pasujący obrazek, zaproponuj jego osadzenie: użyj znacznika `<img src='LINK' alt='Opis obrazka'>` i dodaj podpis źródła pod obrazkiem.
+            - Nie wymuszaj linków ani grafik – dodaj je tylko, jeśli naprawdę pogłębiają przekaz i są związane z tematem.
+        """)
+
+    # Końcówka polecenia
+    final_prompt += "\n\nNapisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`, zgodnie z przekazanym planem i wszystkimi zasadami."
     return _call_perplexity_api(final_prompt)
 
 
