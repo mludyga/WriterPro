@@ -84,6 +84,10 @@ if category_mode == "Wybierz ręcznie":
     else:
         st.warning("Nie udało się pobrać kategorii z portalu. Wybór ręczny niemożliwy.")
 
+# 🧼 Jeśli tryb to "Automatycznie", czyścimy ID kategorii
+if category_mode == "Automatycznie":
+    st.session_state["chosen_category_id"] = None
+
 # --- KROK 3: Generowanie ---
 st.header("Krok 3: Generuj!")
 if st.button("🚀 Uruchom proces generowania"):
