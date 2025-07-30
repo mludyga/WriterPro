@@ -43,17 +43,34 @@ def _call_perplexity_api(prompt):
         logging.error(f"Błąd API Perplexity: {e}")
         return None
 
-def fetch_categories(api_base_url):
+def fetch_categories(site_config):
     """
-    Pobiera dostępne kategorie z API portalu (np. WordPress).
+    Pobiera dostępne kategorie z WordPressa na podstawie konfiguracji portalu.
     """
+    base_url = site_config.get("wp_api_url_base")
+    if not base_url:
+        logging.warning("Brak wp_api_url_base w konfiguracji portalu.")
+        return []
+
+    url = f"{base_url}/categories"
+    headers = {}
+    auth = None
+
+    if site_config.get("auth_method") == "basic":
+        username = site_config.get("wp_username")
+        password = site_config.get("wp_password")
+        auth = (username, password)
+    elif site_config.get("auth_method") == "bearer":
+        token = site_config.get("wp_bearer_token")
+        headers["Authorization"] = f"Bearer {token}"
+
     try:
-        response = requests.get(f"{api_base_url}/wp-json/wp/v2/categories", timeout=10)
+        response = requests.get(url, headers=headers, auth=auth, timeout=10)
         response.raise_for_status()
         categories = response.json()
         return [(cat['id'], cat['name']) for cat in categories]
     except Exception as e:
-        logging.warning(f"Nie udało się pobrać kategorii: {e}")
+        logging.warning(f"Nie udało się pobrać kategorii z {url}: {e}")
         return []
 
 def step1_research(topic_data, site_config):
