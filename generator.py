@@ -45,7 +45,7 @@ def _call_perplexity_api(prompt):
 
 def fetch_categories(site_config):
     """
-    Pobiera dostępne kategorie z WordPressa na podstawie konfiguracji portalu.
+    Pobiera wszystkie dostępne kategorie z WordPressa.
     """
     base_url = site_config.get("wp_api_url_base")
     if not base_url:
@@ -64,14 +64,29 @@ def fetch_categories(site_config):
         token = site_config.get("wp_bearer_token")
         headers["Authorization"] = f"Bearer {token}"
 
-    try:
-        response = requests.get(url, headers=headers, auth=auth, timeout=10)
-        response.raise_for_status()
-        categories = response.json()
-        return [(cat['id'], cat['name']) for cat in categories]
-    except Exception as e:
-        logging.warning(f"Nie udało się pobrać kategorii z {url}: {e}")
-        return []
+    all_categories = []
+    page = 1
+
+    while True:
+        try:
+            response = requests.get(
+                url,
+                headers=headers,
+                auth=auth,
+                params={"per_page": 100, "page": page},
+                timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not data:
+                break
+            all_categories.extend([(cat['id'], cat['name']) for cat in data])
+            page += 1
+        except Exception as e:
+            logging.warning(f"Nie udało się pobrać kategorii z {url}: {e}")
+            break
+
+    return all_categories
 
 def step1_research(topic_data, site_config):
     """Krok 1: AI przeprowadza research i zbiera 'surowe' dane oraz elementy narracyjne."""
