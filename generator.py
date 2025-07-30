@@ -324,11 +324,15 @@ def run_news_process(site_key, topic_source, manual_topic_data, category_id=None
 
     # Kategorie
     all_categories = get_all_wp_categories(site_config)
-    if all_categories is None:
-        category_id = 1
+    if category_id is not None:
+        logging.info(f"Użyto ręcznie wybranej kategorii o ID: {category_id}")
     else:
-        chosen_cat = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-        category_id = all_categories.get(chosen_cat, 1)
+        all_categories = get_all_wp_categories(site_config)
+        if all_categories is None:
+            category_id = 1
+        else:
+            chosen_cat = choose_category_ai(post_title, post_content, list(all_categories.keys()))
+            category_id = all_categories.get(chosen_cat, 1)
 
     # Tagi
     tags_list = generate_tags_ai(post_title, post_content)
