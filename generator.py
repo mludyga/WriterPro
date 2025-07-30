@@ -396,13 +396,17 @@ def run_generation_process(site_key, topic_source, manual_topic_data, category_i
     
     all_categories = get_all_wp_categories(site_config)
     
-    if all_categories is None:
-        logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej 'Bez kategorii'.")
-        chosen_category_name = "Bez kategorii"
-        category_id = 1 
+    if category_id is not None:
+         logging.info(f"Użyto ręcznie wybranej kategorii o ID: {category_id}")
     else:
-        chosen_category_name = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-        category_id = all_categories.get(chosen_category_name)
+         if all_categories is None:
+            logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej 'Bez kategorii'.")
+            category_id = 1
+         else:
+            chosen_category_name = choose_category_ai(post_title, post_content, list(all_categories.keys()))
+            category_id = all_categories.get(chosen_category_name, 1)
+            logging.info(f"Automatycznie dobrana kategoria: {chosen_category_name} (ID: {category_id})")
+
     
     tags_list = generate_tags_ai(post_title, post_content)
     tag_ids = [get_or_create_term_id(tag, "tags", site_config) for tag in tags_list]
