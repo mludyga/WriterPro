@@ -193,8 +193,7 @@ def get_event_registry_topics(site_config):
     logging.info("Pobieranie tematów z EventRegistry...")
     try:
         er = EventRegistry(apiKey=site_config['event_registry_key'])
-        date_start = (datetime.now().date() - timedelta(days=3)).isoformat()
-        date_end   = datetime.now().date().isoformat()
+        date_start = date_end = datetime.now().date().isoformat()
 
         # Lista URI — albo pojedynczy, albo OR
         uris = site_config.get("er_concept_uris") or [site_config['er_concept_uri']]
