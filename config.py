@@ -159,5 +159,17 @@ SITES = {
         "thematic_focus": "motoryzacji (samochody, przepisy, testy, nowości rynkowe)",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 1
+    },
+        "tylkoslask": {
+        "friendly_name": "TylkoSlask.pl",
+        "wp_api_url_base": "https://tylkoslask.pl/wp-json/wp/v2",
+        "wp_username": os.getenv("TYLKOSLASK_USER"),
+        "wp_password": os.getenv("TYLKOSLASK_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("TYLKOSLASK_ER_KEY"),
+        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+        "thematic_focus": "Górnego Śląska i Zagłębia (portal regionalny)",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 3
     }
 }
