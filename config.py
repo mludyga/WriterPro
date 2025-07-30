@@ -150,7 +150,7 @@ SITES = {
     },
     "autocentrumgroup": {
         "friendly_name": "AutoCentrumGroup.pl",
-        "wp_api_url_base": "https://autocentrumgroup.pl.pl/wp-json/wp/v2",
+        "wp_api_url_base": "https://autocentrumgroup.pl/wp-json/wp/v2",
         "wp_username": os.getenv("AUTOCNTRUM_USER"),
         "wp_password": os.getenv("AUTOCENTRUM_PASS"),
         "auth_method": "basic",
