@@ -50,6 +50,34 @@ article_type = st.radio(
     horizontal=True
 )
 
+# --- KROK 2b: Wybór kategorii ---
+st.header("Krok 2b: Wybierz kategorię")
+
+category_mode = st.radio(
+    "Jak dobrać kategorię artykułu?",
+    ("Automatycznie", "Wybierz ręcznie"),
+    horizontal=True
+)
+
+chosen_category = None
+category_options = []
+
+if category_mode == "Wybierz ręcznie":
+    with st.spinner("Pobieranie kategorii z portalu..."):
+        site_config = SITES[site_key]
+        category_options = fetch_categories(site_config)
+
+    if category_options:
+        category_names = [name for (_, name) in category_options]
+        selected_name = st.selectbox("Wybierz kategorię:", options=category_names)
+        # Pobieramy ID kategorii
+        for cat_id, cat_name in category_options:
+            if cat_name == selected_name:
+                chosen_category = cat_id
+                break
+    else:
+        st.warning("Nie udało się pobrać kategorii z portalu. Wybór ręczny niemożliwy.")
+
 # --- KROK 3: Generowanie ---
 st.header("Krok 3: Generuj!")
 if st.button("🚀 Uruchom proces generowania"):
