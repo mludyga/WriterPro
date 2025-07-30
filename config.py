@@ -156,6 +156,10 @@ SITES = {
         "auth_method": "basic",
         "event_registry_key": os.getenv("AUTOCENTRUM_ER_KEY"),
         "er_concept_uri": "http://pl.wikipedia.org/wiki/Motoryzacja",
+        "er_concept_uris": [
+          "http://pl.wikipedia.org/wiki/Motoryzacja",
+          "http://pl.wikipedia.org/wiki/Samochód_osobowy"
+        ],
         "thematic_focus": "motoryzacji (samochody, przepisy, testy, nowości rynkowe)",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 1
