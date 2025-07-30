@@ -322,7 +322,7 @@ SITES = {
             "http://en.wikipedia.org/wiki/Zebrzydowice",
             "http://en.wikipedia.org/wiki/Żory",
             "http://en.wikipedia.org/wiki/Żywiec"
-        ]
+        ],
         "thematic_focus": "Górnego Śląska i Zagłębia (portal regionalny)",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 3
