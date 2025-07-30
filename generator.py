@@ -353,6 +353,75 @@ def run_news_process(site_key, topic_source, manual_topic_data, category_id=None
         title_tag.decompose()
     post_content = str(soup)
 
+    # --- Wyszukiwanie mediów do ewentualnego embedowania ---
+    from urllib.parse import urlparse
+
+    def extract_embeds_and_images(html_content):
+        soup = BeautifulSoup(html_content, 'html.parser')
+        youtube_links, twitter_links, facebook_links, images = [], [], [], []
+
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            netloc = urlparse(href).netloc
+            if "youtube.com" in netloc or "youtu.be" in netloc:
+                youtube_links.append(href)
+            elif "twitter.com" in netloc or "x.com" in netloc:
+                twitter_links.append(href)
+            elif "facebook.com" in netloc:
+                facebook_links.append(href)
+
+        for img in soup.find_all('img'):
+            src = img.get('src')
+            alt = img.get('alt', '')
+            if src:
+                images.append({'src': src, 'alt': alt})
+
+        return {
+            "youtube": youtube_links,
+            "twitter": twitter_links,
+            "facebook": facebook_links,
+            "images": images
+        }
+
+# Zastosowanie:
+media_references = extract_embeds_and_images(post_content)
+def insert_youtube_embeds(html, youtube_links):
+    soup = BeautifulSoup(html, 'html.parser')
+    for link in youtube_links:
+        for a_tag in soup.find_all('a', href=link):
+            iframe = soup.new_tag("iframe", width="560", height="315", frameborder="0", allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share", allowfullscreen=True)
+            # Obsługa short i long URL
+            video_id = None
+            if "watch?v=" in link:
+                video_id = link.split("watch?v=")[-1].split("&")[0]
+            elif "youtu.be/" in link:
+                video_id = link.split("youtu.be/")[-1].split("?")[0]
+            if video_id:
+                iframe['src'] = f"https://www.youtube.com/embed/{video_id}"
+                a_tag.replace_with(iframe)
+    return str(soup)
+
+def wrap_images_with_figures(html, image_data):
+    soup = BeautifulSoup(html, 'html.parser')
+    for img_info in image_data:
+        img_tag = soup.find("img", src=img_info["src"])
+        if img_tag:
+            figure = soup.new_tag("figure")
+            figcaption = soup.new_tag("figcaption")
+            figcaption.string = f"Źródło: {img_info['src']}"
+            img_tag.wrap(figure)
+            figure.append(figcaption)
+    return str(soup)
+
+# Zamień linki YouTube na iframe'y
+if media_references["youtube"]:
+    post_content = insert_youtube_embeds(post_content, media_references["youtube"])
+
+# Obuduj obrazki figure/figcaption
+if media_references["images"]:
+    post_content = wrap_images_with_figures(post_content, media_references["images"])
+logging.info(f"Znalezione linki do embedów: {media_references}")
+
     # Kategorie
     all_categories = get_all_wp_categories(site_config)
     if category_id is not None:
