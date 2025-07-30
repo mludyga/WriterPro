@@ -292,7 +292,7 @@ def step_news_article(research_data, site_config, topic_data):
     """)
     return _call_perplexity_api(prompt)
 
-def run_news_process(site_key, topic_source, manual_topic_data):
+def run_news_process(site_key, topic_source, manual_topic_data, category_id=None):
     """
     Workflow dla newsowego artykułu łącznie z publikacją na WP.
     """
@@ -355,7 +355,7 @@ def run_news_process(site_key, topic_source, manual_topic_data):
     else:
         return "BŁĄD: Publikacja newsowego artykułu nie powiodła się."
 
-def run_generation_process(site_key, topic_source, manual_topic_data):
+def run_generation_process(site_key, topic_source, manual_topic_data, category_id=None):
     """Główna funkcja wykonawcza, wywoływana przez aplikację webową."""
     site_config = SITES[site_key]
     site_config['site_key'] = site_key
