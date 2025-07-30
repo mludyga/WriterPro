@@ -206,6 +206,7 @@ def get_event_registry_topics(site_config):
               {"dateStart": date_start, "dateEnd": date_end, "lang": "pol"}
             ]
           }
+        "sortBy": "date"
         }
 
         qiter = QueryArticlesIter.initWithComplexQuery(complex_query)
