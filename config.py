@@ -196,5 +196,18 @@ SITES = {
         "thematic_focus": "bram, ogrodzeń, kostki brukowej i tego typu infrastruktury",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 3
+    },
+
+        "superkredyty": {
+        "friendly_name": "SuperKredyty.com",
+        "wp_api_url_base": "https://superkredyty.com/wp-json/wp/v2",
+        "wp_username": os.getenv("KREDYTY_USER"),
+        "wp_password": os.getenv("KREDYTY_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("KREDYTY_ER_KEY"),
+        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+        "thematic_focus": "pożyczek, kredytów, kont bankowych i innych instrumentów finansowych",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 3
     }
 }
