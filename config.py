@@ -183,5 +183,18 @@ SITES = {
         "thematic_focus": "bram, ogrodzeń, kostki brukowej i tego typu infrastruktury",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 3
+    },
+
+        "kupogrodzenie": {
+        "friendly_name": "Kupogrodzenie.pl",
+        "wp_api_url_base": "https://kupogrodzenie.pl/wp-json/wp/v2",
+        "wp_username": os.getenv("KUPOGR_USER"),
+        "wp_password": os.getenv("KUPOGR_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("KUPOGR_ER_KEY"),
+        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+        "thematic_focus": "bram, ogrodzeń, kostki brukowej i tego typu infrastruktury",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 3
     }
 }
