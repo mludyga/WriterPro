@@ -32,7 +32,7 @@ Artykuł musi być **analitycznym ROZWINIĘCIEM TEMATU** z poniższych informacj
 
 3.  **ŚCISŁE TRZYMANIE SIĘ TEMATU:** Cały tekst musi dotyczyć **{thematic_focus}**. Pokaż głęboką ekspertyzę w tej konkretnej dziedzinie.
 
-4.  **NOWY, EKSPERCKI TYTUŁ:** Zacznij odpowiedź od nowego, chwytliwego i merytorycznego tytułu w tagu `<h2>`.
+4.  **TYTUŁ SEO Z FRAZĄ KLUCZOWĄ:** Zacznij od nowego tytułu w tagu `<h2>`. Tytuł musi zawierać frazę kluczową (lub jej bardzo bliską wersję), być krótki (maks. 70 znaków), jasny i zgodny z zasadami SEO. Unikaj ozdobników, clickbaitów i zbyt ogólnych zwrotów. Liczy się precyzja i trafność.
 
 5.  **ZASADY KAPITALIZACJI (BARDZO WAŻNE):** Stosuj polskie zasady pisowni dla tytułów i nagłówków. **Tylko pierwsze słowo jest pisane wielką literą** (oraz oczywiście nazwy własne). Unikaj angielskiego stylu "Title Case" (Każde Słowo Wielką Literą).
     -   **ŹLE:** `Najlepsze Dzielnice Pod Budowę Nowego Domu.`
