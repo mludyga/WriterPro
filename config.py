@@ -155,7 +155,7 @@ SITES = {
         "wp_password": os.getenv("AUTOCENTRUM_PASS"),
         "auth_method": "basic",
         "event_registry_key": os.getenv("AUTOCENTRUM_ER_KEY"),
-        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+        "er_concept_uri": "http://pl.wikipedia.org/wiki/Motoryzacja",
         "thematic_focus": "motoryzacji (samochody, przepisy, testy, nowości rynkowe)",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 1
@@ -205,7 +205,7 @@ SITES = {
         "wp_password": os.getenv("KREDYTY_PASS"),
         "auth_method": "basic",
         "event_registry_key": os.getenv("KREDYTY_ER_KEY"),
-        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+        "er_concept_uri": "http://pl.wikipedia.org/wiki/Kredyt_bankowy",
         "thematic_focus": "pożyczek, kredytów, kont bankowych i innych instrumentów finansowych",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 3
