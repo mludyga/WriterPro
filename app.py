@@ -2,6 +2,8 @@
 import streamlit as st
 from config import SITES
 from generator import run_generation_process, run_news_process
+from generator import fetch_categories
+
 
 st.set_page_config(page_title="Generator Treści AI", layout="wide")
 
