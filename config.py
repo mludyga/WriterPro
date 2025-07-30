@@ -172,6 +172,11 @@ SITES = {
         "auth_method": "basic",
         "event_registry_key": os.getenv("TYLKOSLASK_ER_KEY"),
         "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+            "er_concept_uris": [
+          "http://en.wikipedia.org/wiki/Katowice",
+          "http://en.wikipedia.org/wiki/Chorzów",
+          "http://en.wikipedia.org/wiki/Świętochłowice"
+        ],
         "thematic_focus": "Górnego Śląska i Zagłębia (portal regionalny)",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 3
