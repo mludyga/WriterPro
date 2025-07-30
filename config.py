@@ -98,7 +98,8 @@ SITES = {
         "event_registry_key": os.getenv("AUTOZAKUP_ER_KEY"),
         "er_concept_uri": "http://pl.wikipedia.org/wiki/Motoryzacja",
         "thematic_focus": "motoryzacji (samochody, przepisy, testy, nowości rynkowe)",
-        "prompt_template": PREMIUM_PROMPT_TEMPLATE
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 1
     },
     "krakowskiryneknieruchomosci": {
         "friendly_name": "Krakowski Rynek Nieruchomości",
@@ -109,7 +110,8 @@ SITES = {
         "event_registry_key": os.getenv("KRN_ER_KEY"),
         "er_concept_uri": "http://pl.wikipedia.org/wiki/Rynek_nieruchomości",
         "thematic_focus": "nieruchomości (ceny mieszkań, porady dla kupujących, nowe inwestycje, prawo budowlane)",
-        "prompt_template": PREMIUM_PROMPT_TEMPLATE
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 2
     },
     "radiopin": {
         "friendly_name": "RadioPIN.pl",
@@ -119,7 +121,8 @@ SITES = {
         "event_registry_key": os.getenv("RADIOPIN_ER_KEY"),
         "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
         "thematic_focus": "bieżących wydarzeń w Polsce (polityka, społeczeństwo, gospodarka)",
-        "prompt_template": PREMIUM_PROMPT_TEMPLATE
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 17
     },
     "echopolski": {
         "friendly_name": "EchoPolski.pl",
@@ -130,7 +133,8 @@ SITES = {
         "event_registry_key": os.getenv("ECHOPOLSKI_ER_KEY"),
         "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
         "thematic_focus": "bieżących wydarzeń w Polsce (polityka, społeczeństwo, gospodarka)",
-        "prompt_template": PREMIUM_PROMPT_TEMPLATE
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 7
     },
     "infodlapolaka": {
         "friendly_name": "InfoDlaPolaka.pl",
@@ -141,6 +145,19 @@ SITES = {
         "event_registry_key": os.getenv("INFODLAPOLAKA_ER_KEY"),
         "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
         "thematic_focus": "bieżących wydarzeń w Polsce i na świecie",
-        "prompt_template": PREMIUM_PROMPT_TEMPLATE
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 1
+    }
+    "autocentrumgroup": {
+        "friendly_name": "AutoCentrumGroup.pl",
+        "wp_api_url_base": "https://autocentrumgroup.pl.pl/wp-json/wp/v2",
+        "wp_username": os.getenv("AUTOCNTRUM_USER"),
+        "wp_password": os.getenv("AUTOCENTRUM_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("AUTOCENTRUM_ER_KEY"),
+        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+        "thematic_focus": "motoryzacji (samochody, przepisy, testy, nowości rynkowe)",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 1
     }
 }
