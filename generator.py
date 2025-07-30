@@ -117,9 +117,13 @@ def step2_create_outline(research_data, site_config, keyword=None):
     logging.info("--- KROK 2: Tworzę kreatywny i szczegółowy plan artykułu... ---")
 
     # Dynamiczne tworzenie instrukcji dotyczącej tytułu
-    title_instruction = "1.  Zaproponuj nowy, chwytliwy i merytoryczny tytuł. Najlepiej jednak, by słowo kluczowe znalazło się w tytule, to ważne pod SEO. Umieść go w tagu `<h2>`."
-    if keyword:
-        title_instruction = f"1.  Zaproponuj nowy, chwytliwy i merytoryczny tytuł. **WARUNEK KONIECZNY:** Tytuł musi zawierać dokładną frazę kluczową: '{keyword}'. To jest najważniejsze dla SEO. Umieść gotowy tytuł w tagu `<h2>`."
+    title_instruction = (
+    "1. Zaproponuj krótki i merytoryczny tytuł (maks. 70 znaków). "
+    "Tytuł **musi zawierać dokładną frazę kluczową**: '{keyword}'. "
+    "Nie dodawaj zbędnych ozdobników. Unikaj clickbaitu. "
+    "Tytuł powinien być jasny, SEO-friendly i zawierać najważniejsze słowa. "
+    "Umieść go w tagu `<h2>`."
+)
 
     prompt = textwrap.dedent(f"""
         Na podstawie poniższej syntezy danych, stwórz **kreatywny, angażujący i logiczny plan artykułu premium** dla portalu {site_config['friendly_name']}.
