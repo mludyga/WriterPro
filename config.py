@@ -171,8 +171,7 @@ SITES = {
         "wp_password": os.getenv("TYLKOSLASK_PASS"),
         "auth_method": "basic",
         "event_registry_key": os.getenv("TYLKOSLASK_ER_KEY"),
-        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
-            "er_concept_uris": [
+        "er_concept_uris": [
           "http://en.wikipedia.org/wiki/Katowice",
           "http://en.wikipedia.org/wiki/Chorzów",
           "http://en.wikipedia.org/wiki/Świętochłowice"
