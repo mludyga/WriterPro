@@ -43,6 +43,19 @@ def _call_perplexity_api(prompt):
         logging.error(f"Błąd API Perplexity: {e}")
         return None
 
+def fetch_categories(api_base_url):
+    """
+    Pobiera dostępne kategorie z API portalu (np. WordPress).
+    """
+    try:
+        response = requests.get(f"{api_base_url}/wp-json/wp/v2/categories", timeout=10)
+        response.raise_for_status()
+        categories = response.json()
+        return [(cat['id'], cat['name']) for cat in categories]
+    except Exception as e:
+        logging.warning(f"Nie udało się pobrać kategorii: {e}")
+        return []
+
 def step1_research(topic_data, site_config):
     """Krok 1: AI przeprowadza research i zbiera 'surowe' dane oraz elementy narracyjne."""
     logging.info("--- KROK 1: Rozpoczynam research i syntezę danych... ---")
