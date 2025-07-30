@@ -164,7 +164,7 @@ SITES = {
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 1
     },
-        "tylkoslask": {
+    "tylkoslask": {
         "friendly_name": "TylkoSlask.pl",
         "wp_api_url_base": "https://tylkoslask.pl/wp-json/wp/v2",
         "wp_username": os.getenv("TYLKOSLASK_USER"),
