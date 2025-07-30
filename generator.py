@@ -205,8 +205,8 @@ def get_event_registry_topics(site_config):
               {"$or": [{"conceptUri": uri} for uri in uris]},
               {"dateStart": date_start, "dateEnd": date_end, "lang": "pol"}
             ]
-          }
-        "sortBy": "date"
+          },
+          "sortBy": "date"
         }
 
         qiter = QueryArticlesIter.initWithComplexQuery(complex_query)
