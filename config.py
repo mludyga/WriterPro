@@ -171,5 +171,17 @@ SITES = {
         "thematic_focus": "Górnego Śląska i Zagłębia (portal regionalny)",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 3
+    },
+        "ogrodzeniapanelowe": {
+        "friendly_name": "OgrodzeniaPanelowePolska.pl",
+        "wp_api_url_base": "https://ogrodzeniapanelowepolska.pl/wp-json/wp/v2",
+        "wp_username": os.getenv("OGRPAN_USER"),
+        "wp_password": os.getenv("OGRPAN_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("OGRPAN_ER_KEY"),
+        "er_concept_uri": "http://pl.wikipedia.org/wiki/Polska",
+        "thematic_focus": "bram, ogrodzeń, kostki brukowej i tego typu infrastruktury",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 3
     }
 }
