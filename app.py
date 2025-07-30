@@ -70,11 +70,17 @@ if category_mode == "Wybierz ręcznie":
     if category_options:
         category_names = [name for (_, name) in category_options]
         selected_name = st.selectbox("Wybierz kategorię:", options=category_names)
+        
         # Pobieramy ID kategorii
         for cat_id, cat_name in category_options:
             if cat_name == selected_name:
                 chosen_category = cat_id
                 break
+
+        # 🔐 Zapisujemy do session_state
+        if chosen_category:
+            st.session_state["chosen_category_id"] = chosen_category
+
     else:
         st.warning("Nie udało się pobrać kategorii z portalu. Wybór ręczny niemożliwy.")
 
