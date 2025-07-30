@@ -88,6 +88,15 @@ if category_mode == "Wybierz ręcznie":
 if category_mode == "Automatycznie":
     st.session_state["chosen_category_id"] = None
 
+writing_mode = st.selectbox(
+    "Wybierz tryb generowania treści:",
+    ["Standardowy (tylko tekst)", "Wzbogacony (embed + obrazki jeśli pasują)"],
+    index=0
+)
+
+# Zapisz do session_state (dla użycia w promptach dalej)
+st.session_state["writing_mode"] = "extended" if "embed" in writing_mode.lower() else "standard"
+
 # --- KROK 3: Generowanie ---
 st.header("Krok 3: Generuj!")
 if st.button("🚀 Uruchom proces generowania"):
