@@ -147,7 +147,7 @@ SITES = {
         "thematic_focus": "bieżących wydarzeń w Polsce i na świecie",
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 1
-    }
+    },
     "autocentrumgroup": {
         "friendly_name": "AutoCentrumGroup.pl",
         "wp_api_url_base": "https://autocentrumgroup.pl.pl/wp-json/wp/v2",
