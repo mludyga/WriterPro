@@ -123,7 +123,7 @@ def step2_create_outline(research_data, site_config, keyword=None):
     "Nie dodawaj zbędnych ozdobników. Unikaj clickbaitu. "
     "Tytuł powinien być jasny, SEO-friendly i zawierać najważniejsze słowa. "
     "Umieść go w tagu `<h2>`."
-)
+    )
 
     prompt = textwrap.dedent(f"""
         Na podstawie poniższej syntezy danych, stwórz **kreatywny, angażujący i logiczny plan artykułu premium** dla portalu {site_config['friendly_name']}.
