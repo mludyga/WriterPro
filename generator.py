@@ -469,7 +469,7 @@ def run_news_process(site_key, topic_source, manual_topic_data, category_id=None
             category_id = 1
         else:
             chosen_cat = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-            category_id = all_categories.get(chosen_cat, 1)
+            category_id = all_categories.get(chosen_cat[0], 1) if isinstance(chosen_cat, list) else all_categories.get(chosen_cat, 1)
 
     # Tagi
     tags_list = generate_tags_ai(post_title, post_content)
