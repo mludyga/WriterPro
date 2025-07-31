@@ -1,0 +1,71 @@
+# Nazwa całego procesu, widoczna w panelu Actions
+name: Automatyczne Generowanie Artykułów
+
+# Definicja, kiedy proces ma się uruchamiać
+on:
+  # Uruchamia workflow według harmonogramu (czas UTC)
+  schedule:
+    # Uruchom codziennie o 7:00 UTC (9:00 czasu polskiego letniego)
+    - cron: '0 7 * * *'
+    # Uruchom codziennie o 15:00 UTC (17:00 czasu polskiego letniego)
+    - cron: '0 15 * * *'
+  
+  # Pozwala na ręczne uruchomienie workflow z panelu Actions na GitHub (świetne do testów)
+  workflow_dispatch:
+
+# Definicja zadań do wykonania
+jobs:
+  # Nazwa zadania
+  generate-articles:
+    # Uruchom na najnowszej wersji systemu Ubuntu
+    runs-on: ubuntu-latest
+    # Lista kroków do wykonania w ramach zadania
+    steps:
+      - name: 1. Pobieranie kodu z repozytorium
+        uses: actions/checkout@v4
+
+      - name: 2. Ustawienie środowiska Python
+        uses: actions/setup-python@v4
+        with:
+          # Użyj wersji Pythona, której wymaga Twój projekt
+          python-version: '3.11'
+
+      - name: 3. Instalacja potrzebnych bibliotek
+        run: pip install -r requirements.txt
+
+      # --- ZADANIA URUCHAMIANE O 7:00 UTC ---
+      
+      - name: Generuj artykuł PREMIUM dla Autozakup.com.pl
+        # Uruchom ten krok tylko, jeśli czas z harmonogramu to 7:00
+        if: github.event.schedule == '0 7 * * *'
+        env:
+          # W tym miejscu przekazujemy sekrety do skryptu
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          AUTOZAKUP_USER: ${{ secrets.AUTOZAKUP_USER }}
+          AUTOZAKUP_PASS: ${{ secrets.AUTOZAKUP_PASS }}
+          AUTOZAKUP_ER_KEY: ${{ secrets.AUTOZAKUP_ER_KEY }}
+        # Uruchomienie skryptu z odpowiednimi parametrami
+        run: python generator.py --site autozakup --type premium
+
+      - name: Generuj artykuł NEWSOWY dla RadioPIN.pl
+        if: github.event.schedule == '0 7 * * *'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          RADIOPIN_BEARER_TOKEN: ${{ secrets.RADIOPIN_BEARER_TOKEN }}
+          RADIOPIN_ER_KEY: ${{ secrets.RADIOPIN_ER_KEY }}
+        run: python generator.py --site radiopin --type news
+
+      # --- ZADANIA URUCHAMIANE O 15:00 UTC ---
+
+      - name: Generuj artykuł PREMIUM dla krakowskiryneknieruchomosci.pl
+        # Uruchom ten krok tylko, jeśli czas z harmonogramu to 15:00
+        if: github.event.schedule == '0 15 * * *'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          KRN_USER: ${{ secrets.KRN_USER }}
+          KRN_PASS: ${{ secrets.KRN_PASS }}
+          KRN_ER_KEY: ${{ secrets.KRN_ER_KEY }}
+        run: python generator.py --site krakowskiryneknieruchomosci --type premium
