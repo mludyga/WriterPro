@@ -192,7 +192,94 @@ SITES = {
         "prompt_template": PREMIUM_PROMPT_TEMPLATE,
         "author_id": 3
     },
-        "ogrodzeniapanelowe": {
+
+    "tylkoslask2": {
+        "friendly_name": "TylkoSlask.pl2",
+        "wp_api_url_base": "https://tylkoslask.pl/wp-json/wp/v2",
+        "wp_username": os.getenv("TYLKOSLASK_USER"),
+        "wp_password": os.getenv("TYLKOSLASK_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("TYLKOSLASK_ER_KEY"),
+        "er_concept_uris": [
+            "http://en.wikipedia.org/wiki/Jaworzno",
+            "http://en.wikipedia.org/wiki/Siemianowice_Śląskie",
+            "http://en.wikipedia.org/wiki/Żory",
+            "http://en.wikipedia.org/wiki/Tarnowskie_Góry",
+            "http://en.wikipedia.org/wiki/Będzin",
+            "http://en.wikipedia.org/wiki/Piekary_Śląskie",
+            "http://en.wikipedia.org/wiki/Racibórz",
+            "http://en.wikipedia.org/wiki/Zawiercie",
+            "http://en.wikipedia.org/wiki/Świętochłowice",
+            "http://en.wikipedia.org/wiki/Wodzisław_Śląski",
+            "http://en.wikipedia.org/wiki/Mikołów",
+            "http://en.wikipedia.org/wiki/Knurów",
+            "http://en.wikipedia.org/wiki/Czechowice-Dziedzice",
+            "http://en.wikipedia.org/wiki/Cieszyn",
+            "http://en.wikipedia.org/wiki/Czeladź"
+        ],
+        "thematic_focus": "Górnego Śląska i Zagłębia (portal regionalny)",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 3
+    },
+
+    "tylkoslask3": {
+        "friendly_name": "TylkoSlask.pl3",
+        "wp_api_url_base": "https://tylkoslask.pl/wp-json/wp/v2",
+        "wp_username": os.getenv("TYLKOSLASK_USER"),
+        "wp_password": os.getenv("TYLKOSLASK_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("TYLKOSLASK_ER_KEY"),
+        "er_concept_uris": [
+            "http://en.wikipedia.org/wiki/Łaziska_Górne",
+            "http://en.wikipedia.org/wiki/Żywiec",
+            "http://en.wikipedia.org/wiki/Pszczyna",
+            "http://en.wikipedia.org/wiki/Lubliniec",
+            "http://en.wikipedia.org/wiki/Myszków",
+            "http://en.wikipedia.org/wiki/Radlin",
+            "http://en.wikipedia.org/wiki/Czerwionka-Leszczyny",
+            "http://en.wikipedia.org/wiki/Strumień",
+            "http://en.wikipedia.org/wiki/Wojkowice",
+            "http://en.wikipedia.org/wiki/Pyskowice",
+            "http://en.wikipedia.org/wiki/Wilamowice",
+            "http://en.wikipedia.org/wiki/Blachownia",
+            "http://en.wikipedia.org/wiki/Ustroń",
+            "http://en.wikipedia.org/wiki/Miasteczko_Śląskie",
+            "http://en.wikipedia.org/wiki/Kuźnia_Raciborska"
+        ],
+        "thematic_focus": "Górnego Śląska i Zagłębia (portal regionalny)",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 3
+    },
+
+    "tylkoslask4": {
+        "friendly_name": "TylkoSlask.pl4",
+        "wp_api_url_base": "https://tylkoslask.pl/wp-json/wp/v2",
+        "wp_username": os.getenv("TYLKOSLASK_USER"),
+        "wp_password": os.getenv("TYLKOSLASK_PASS"),
+        "auth_method": "basic",
+        "event_registry_key": os.getenv("TYLKOSLASK_ER_KEY"),
+        "er_concept_uris": [
+            "http://en.wikipedia.org/wiki/Sośnicowice",
+            "http://en.wikipedia.org/wiki/Siewierz",
+            "http://en.wikipedia.org/wiki/Czechowice-Dziedzice",
+            "http://en.wikipedia.org/wiki/Pilica",
+            "http://en.wikipedia.org/wiki/Herby",
+            "http://en.wikipedia.org/wiki/Szczekociny",
+            "http://en.wikipedia.org/wiki/Żarki",
+            "http://en.wikipedia.org/wiki/Krzanowice",
+            "http://en.wikipedia.org/wiki/Włodowice",
+            "http://en.wikipedia.org/wiki/Ogrodzieniec",
+            "http://en.wikipedia.org/wiki/Poręba",
+            "http://en.wikipedia.org/wiki/Pszów",
+            "http://en.wikipedia.org/wiki/Wisła",
+            "http://en.wikipedia.org/wiki/Poraj",
+            "http://en.wikipedia.org/wiki/Skoczów"
+        ],
+        "thematic_focus": "Górnego Śląska i Zagłębia (portal regionalny)",
+        "prompt_template": PREMIUM_PROMPT_TEMPLATE,
+        "author_id": 3
+    },
+    "ogrodzeniapanelowe": {
         "friendly_name": "OgrodzeniaPanelowePolska.pl",
         "wp_api_url_base": "https://ogrodzeniapanelowepolska.pl/wp-json/wp/v2",
         "wp_username": os.getenv("OGRPAN_USER"),
@@ -205,7 +292,7 @@ SITES = {
         "author_id": 3
     },
 
-        "kupogrodzenie": {
+    "kupogrodzenie": {
         "friendly_name": "Kupogrodzenie.pl",
         "wp_api_url_base": "https://kupogrodzenie.pl/wp-json/wp/v2",
         "wp_username": os.getenv("KUPOGR_USER"),
@@ -218,7 +305,7 @@ SITES = {
         "author_id": 3
     },
 
-        "superkredyty": {
+    "superkredyty": {
         "friendly_name": "SuperKredyty.com",
         "wp_api_url_base": "https://superkredyty.com/wp-json/wp/v2",
         "wp_username": os.getenv("KREDYTY_USER"),
