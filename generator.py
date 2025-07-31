@@ -236,17 +236,33 @@ def get_all_wp_categories(site_config):
 
 def choose_category_ai(title, content_snippet, available_categories_names, fallback_category="Bez kategorii"):
     if not available_categories_names or len(available_categories_names) <= 1:
-        return next(iter(available_categories_names)) if available_categories_names else fallback_category
-    logging.info(f"Wybieranie kategorii przez AI...")
+        return list(available_categories_names)[:1] if available_categories_names else [fallback_category]
+
+    logging.info("Wybieranie kategorii przez AI...")
     categories_str = ", ".join(available_categories_names)
-    prompt_content = (f"Wybierz JEDNĄ, najlepszą kategorię dla artykułu z listy. Tytuł: \"{title}\". Dostępne kategorie: [{categories_str}]. Zwróć tylko nazwę.")
+    
+    prompt_content = (
+        f"Wybierz JEDNĄ lub DWIE NAJLEPSZE kategorie dla artykułu z poniższej listy. "
+        f"Zwróć je jako listę, oddzielone przecinkiem (bez innych znaków). "
+        f"Tytuł: \"{title}\". "
+        f"Zajawka: \"{content_snippet}\". "
+        f"Dostępne kategorie: [{categories_str}]. "
+        f"Zwróć tylko same nazwy kategorii (maksymalnie 2)."
+    )
+
     try:
-        response = openai_client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt_content}], temperature=0.0, max_tokens=20)
-        chosen_category = response.choices[0].message.content.strip().replace('"', '')
-        return chosen_category if chosen_category in available_categories_names else fallback_category
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt_content}],
+            temperature=0.0,
+            max_tokens=30
+        )
+        raw_output = response.choices[0].message.content.strip()
+        selected = [cat.strip() for cat in raw_output.split(",") if cat.strip() in available_categories_names]
+        return selected[:2] if selected else [fallback_category]
     except Exception as e:
         logging.error(f"Błąd podczas wyboru kategorii przez AI: {e}")
-        return fallback_category
+        return [fallback_category]
 
 def generate_tags_ai(title, content):
     logging.info("Generowanie tagów AI...")
