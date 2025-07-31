@@ -194,23 +194,29 @@ def get_event_registry_topics(site_config):
     logging.info("Pobieranie tematów z EventRegistry...")
     try:
         er = EventRegistry(apiKey=site_config['event_registry_key'])
-        date_start = date_end = datetime.now().date().isoformat()
+        
+        # POPRAWKA NR 1: Rozszerzamy okno wyszukiwania, by uniknąć problemów ze strefą czasową.
+        date_end = datetime.now().date()
+        date_start = (date_end - timedelta(days=3)).isoformat()
+        date_end = date_end.isoformat()
 
-        # Lista URI — albo pojedynczy, albo OR
         uris = site_config.get("er_concept_uris") or [site_config['er_concept_uri']]
 
+        # POPRAWKA NR 2 (Kluczowa): Usuwamy "sortBy" z tego miejsca.
         complex_query = {
           "$query": {
             "$and": [
               {"$or": [{"conceptUri": uri} for uri in uris]},
               {"dateStart": date_start, "dateEnd": date_end, "lang": "pol"}
             ]
-          },
-          "sortBy": "date"
+          }
+          # "sortBy" zostało stąd usunięte
         }
 
         qiter = QueryArticlesIter.initWithComplexQuery(complex_query)
-        for article in qiter.execQuery(er, maxItems=1):
+        
+        # POPRAWKA NR 3 (Kluczowa): Dodajemy "sortBy" jako argument funkcji.
+        for article in qiter.execQuery(er, sortBy="date", maxItems=1):
             return {
               "title": article.get("title"),
               "body_snippet": article.get("body", "")[:700],
