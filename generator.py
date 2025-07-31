@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import openai
 import base64
 import textwrap
+import argparse
 
 # --- Import konfiguracji ---
 try:
@@ -575,3 +576,35 @@ def run_generation_process(site_key, topic_source, manual_topic_data, category_i
         return f"Artykuł opublikowany pomyślnie! Link: {result.get('link')}"
     else:
         return "BŁĄD: Publikacja nie powiodła się. Sprawdź logi."
+
+# Dodaj tę funkcję gdzieś w pliku generator.py
+def run_from_command_line(args):
+    """Uruchamia proces generowania na podstawie argumentów z wiersza poleceń."""
+    site_key = args.site
+    article_type = args.type
+    topic_source = args.source
+    # Ustawiamy domyślne dane tematu, ponieważ w trybie auto i tak zostaną nadpisane
+    manual_topic_data = {} 
+    
+    # Wybieramy odpowiedni proces na podstawie typu artykułu
+    if article_type == "premium":
+        logging.info(f"Uruchamiam generowanie [Premium] dla portalu: {site_key} ze źródła: {topic_source}")
+        result = run_generation_process(site_key, topic_source, manual_topic_data)
+    elif article_type == "news":
+        logging.info(f"Uruchamiam generowanie [News] dla portalu: {site_key} ze źródła: {topic_source}")
+        result = run_news_process(site_key, topic_source, manual_topic_data)
+    else:
+        logging.error(f"Nieznany typ artykułu: {article_type}")
+        return
+
+    logging.info(result)
+
+# Ten fragment dodaj na samym końcu pliku generator.py
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generator artykułów AI.")
+    parser.add_argument("--site", type=str, required=True, help="Klucz portalu (np. autozakup, radiopin).")
+    parser.add_argument("--type", type=str, choices=['premium', 'news'], default='premium', help="Typ artykułu do wygenerowania (premium lub news).")
+    parser.add_argument("--source", type=str, choices=['Automatycznie', 'Ręcznie'], default='Automatycznie', help="Źródło tematu.")
+    
+    args = parser.parse_args()
+    run_from_command_line(args)
