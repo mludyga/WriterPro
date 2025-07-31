@@ -469,7 +469,13 @@ def run_news_process(site_key, topic_source, manual_topic_data, category_id=None
             category_id = 1
         else:
             chosen_cat = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-            category_id = all_categories.get(chosen_cat[0], 1) if isinstance(chosen_cat, list) else all_categories.get(chosen_cat, 1)
+            if isinstance(chosen_cat, list) and chosen_cat:
+                chosen_name = chosen_cat[0]
+            elif isinstance(chosen_cat, str):
+                chosen_name = chosen_cat
+            else:
+                chosen_name = "Bez kategorii"
+            category_id = all_categories.get(chosen_name, 1)
 
     # Tagi
     tags_list = generate_tags_ai(post_title, post_content)
@@ -544,9 +550,9 @@ def run_generation_process(site_key, topic_source, manual_topic_data, category_i
             logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej 'Bez kategorii'.")
             category_id = 1
         else:
-            chosen_category_name = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-            category_id = all_categories.get(chosen_category_name, 1)
-            logging.info(f"Automatycznie dobrana kategoria: {chosen_category_name} (ID: {category_id})")
+            chosen = choose_category_ai(post_title, post_content, list(all_categories.keys()))
+            chosen_name = chosen[0] if isinstance(chosen, list) and chosen else "Bez kategorii"
+            category_id = all_categories.get(chosen_name, 1)
 
     tags_list = generate_tags_ai(post_title, post_content)
     tag_ids = [get_or_create_term_id(tag, "tags", site_config) for tag in tags_list]
