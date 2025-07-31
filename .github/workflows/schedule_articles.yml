@@ -1,25 +1,26 @@
 # Nazwa całego procesu, widoczna w panelu Actions
-name: Automatyczne Generowanie Artykułów
+name: Automatyczne Generowanie Artykułów dla TylkoSlask.pl
 
 # Definicja, kiedy proces ma się uruchamiać
 on:
-  # Uruchamia workflow według harmonogramu (czas UTC)
-  schedule:
-    # Uruchom codziennie o 7:00 UTC (9:00 czasu polskiego letniego)
-    - cron: '0 7 * * *'
-    # Uruchom codziennie o 15:00 UTC (17:00 czasu polskiego letniego)
-    - cron: '0 15 * * *'
-  
   # Pozwala na ręczne uruchomienie workflow z panelu Actions na GitHub (świetne do testów)
   workflow_dispatch:
 
+  # Uruchamia workflow według harmonogramu (czas UTC)
+  schedule:
+    # Uruchom dla --site tylkoslask co godzinę od 7:00 do 23:00 czasu polskiego (5-21 UTC)
+    - cron: '0 5-21 * * *'
+    # Uruchom dla --site tylkoslask2 co trzy godziny od 7:00 czasu polskiego (5, 8, 11, 14, 17, 20 UTC)
+    - cron: '0 5-21/3 * * *'
+    # Uruchom dla --site tylkoslask3 o 10:00, 15:00 i 22:00 czasu polskiego (8, 13, 20 UTC)
+    - cron: '0 8,13,20 * * *'
+    # Uruchom dla --site tylkoslask4 raz dziennie o 17:00 czasu polskiego (15 UTC)
+    - cron: '0 15 * * *'
+
 # Definicja zadań do wykonania
 jobs:
-  # Nazwa zadania
   generate-articles:
-    # Uruchom na najnowszej wersji systemu Ubuntu
     runs-on: ubuntu-latest
-    # Lista kroków do wykonania w ramach zadania
     steps:
       - name: 1. Pobieranie kodu z repozytorium
         uses: actions/checkout@v4
@@ -33,39 +34,49 @@ jobs:
       - name: 3. Instalacja potrzebnych bibliotek
         run: pip install -r requirements.txt
 
-      # --- ZADANIA URUCHAMIANE O 7:00 UTC ---
-      
-      - name: Generuj artykuł PREMIUM dla Autozakup.com.pl
-        # Uruchom ten krok tylko, jeśli czas z harmonogramu to 7:00
-        if: github.event.schedule == '0 7 * * *'
+      # --- ZADANIA DLA TylkoSlask.pl ---
+
+      - name: Generuj artykuł NEWSOWY dla TylkoSlask.pl (co godzinę 7-23)
+        # Uruchom ten krok tylko, jeśli czas z harmonogramu to 'co godzinę od 5 do 21 UTC'
+        if: github.event.schedule == '0 5-21 * * *'
         env:
-          # W tym miejscu przekazujemy sekrety do skryptu
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          AUTOZAKUP_USER: ${{ secrets.AUTOZAKUP_USER }}
-          AUTOZAKUP_PASS: ${{ secrets.AUTOZAKUP_PASS }}
-          AUTOZAKUP_ER_KEY: ${{ secrets.AUTOZAKUP_ER_KEY }}
+          TYLKOSLASK_USER: ${{ secrets.TYLKOSLASK_USER }}
+          TYLKOSLASK_PASS: ${{ secrets.TYLKOSLASK_PASS }}
+          TYLKOSLASK_ER_KEY: ${{ secrets.TYLKOSLASK_ER_KEY }}
         # Uruchomienie skryptu z odpowiednimi parametrami
-        run: python generator.py --site autozakup --type premium
+        run: python generator.py --site tylkoslask --type news --source Automatycznie
 
-      - name: Generuj artykuł NEWSOWY dla RadioPIN.pl
-        if: github.event.schedule == '0 7 * * *'
+      - name: Generuj artykuł NEWSOWY dla TylkoSlask.pl (co 3 godziny od 7)
+        # Uruchom ten krok tylko, jeśli czas z harmonogramu to 'co 3 godziny od 5 UTC'
+        if: github.event.schedule == '0 5-21/3 * * *'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          RADIOPIN_BEARER_TOKEN: ${{ secrets.RADIOPIN_BEARER_TOKEN }}
-          RADIOPIN_ER_KEY: ${{ secrets.RADIOPIN_ER_KEY }}
-        run: python generator.py --site radiopin --type news
+          TYLKOSLASK_USER: ${{ secrets.TYLKOSLASK_USER }}
+          TYLKOSLASK_PASS: ${{ secrets.TYLKOSLASK_PASS }}
+          TYLKOSLASK_ER_KEY: ${{ secrets.TYLKOSLASK_ER_KEY }}
+        run: python generator.py --site tylkoslask2 --type news --source Automatycznie
+        
+      - name: Generuj artykuł NEWSOWY dla TylkoSlask.pl (o 10, 15, 22)
+        # Uruchom ten krok tylko, jeśli czas z harmonogramu to '8, 13, 20 UTC'
+        if: github.event.schedule == '0 8,13,20 * * *'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          TYLKOSLASK_USER: ${{ secrets.TYLKOSLASK_USER }}
+          TYLKOSLASK_PASS: ${{ secrets.TYLKOSLASK_PASS }}
+          TYLKOSLASK_ER_KEY: ${{ secrets.TYLKOSLASK_ER_KEY }}
+        run: python generator.py --site tylkoslask3 --type news --source Automatycznie
 
-      # --- ZADANIA URUCHAMIANE O 15:00 UTC ---
-
-      - name: Generuj artykuł PREMIUM dla krakowskiryneknieruchomosci.pl
-        # Uruchom ten krok tylko, jeśli czas z harmonogramu to 15:00
+      - name: Generuj artykuł NEWSOWY dla TylkoSlask.pl (raz dziennie o 17)
+        # Uruchom ten krok tylko, jeśli czas z harmonogramu to '15 UTC'
         if: github.event.schedule == '0 15 * * *'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          KRN_USER: ${{ secrets.KRN_USER }}
-          KRN_PASS: ${{ secrets.KRN_PASS }}
-          KRN_ER_KEY: ${{ secrets.KRN_ER_KEY }}
-        run: python generator.py --site krakowskiryneknieruchomosci --type premium
+          TYLKOSLASK_USER: ${{ secrets.TYLKOSLASK_USER }}
+          TYLKOSLASK_PASS: ${{ secrets.TYLKOSLASK_PASS }}
+          TYLKOSLASK_ER_KEY: ${{ secrets.TYLKOSLASK_ER_KEY }}
+        run: python generator.py --site tylkoslask4 --type news --source Automatycznie
