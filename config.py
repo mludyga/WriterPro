@@ -54,11 +54,11 @@ Artykuł musi być **analitycznym ROZWINIĘCIEM TEMATU** z poniższych informacj
         </div>
         ```
 
-7.  **GŁĘBSZA ANALIZA LUB KONTEKST HISTORYCZNY:** W jednej z sekcji (`<h2>`) wyjdź poza proste fakty. Dodaj analizę przyczyn i skutków, kontekst historyczny lub prognozy na przyszłość.
+7.  **GŁĘBSZA ANALIZA LUB KONTEKST HISTORYCZNY (nie umieszczaj tych słów w podnagłówku):** W jednej z sekcji (`<h2>`) wyjdź poza proste fakty. Dodaj analizę przyczyn i skutków, kontekst historyczny lub prognozy na przyszłość. 
 
-8.  **TABELA PORÓWNAWCZA LUB ZESTAWIENIE DANYCH:** Jeśli temat na to pozwala, **musisz** umieścić czytelną tabelę (`<table>`) z danymi.
+8.  **TABELA PORÓWNAWCZA LUB ZESTAWIENIE DANYCH (nie umieszczaj tych słów w podnagłówku):** Jeśli temat na to pozwala, **musisz** umieścić czytelną tabelę (`<table>`) z danymi.
 
-9.  **PRAKTYCZNE PORADY LUB WNIOSKI DLA CZYTELNIKA:** Zakończ artykuł sekcją (`<h2>`), która jasno przedstawia praktyczne wnioski lub porady dla czytelnika.
+9.  **PRAKTYCZNE PORADY LUB WNIOSKI DLA CZYTELNIKA (nie umieszczaj tych słów w podnagłówku) :** Zakończ artykuł sekcją (`<h2>`), która jasno przedstawia praktyczne wnioski lub porady dla czytelnika.
 
 ---
 ### POZOSTAŁE ZASADY
