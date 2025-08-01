@@ -606,6 +606,44 @@ def run_from_command_line(args):
 
     logging.info(result)
 
+def find_pexels_images_list(query, count=9):
+    """
+    Wyszukuje w Pexels listę zdjęć i zwraca ich dane (ID, URL-e, autor).
+    """
+    pexels_api_key = COMMON_KEYS.get("PEXELS_API_KEY")
+    if not pexels_api_key:
+        logging.warning("Brak klucza PEXELS_API_KEY. Pomijam wyszukiwanie obrazka.")
+        return []
+
+    try:
+        from pexels_api import API # Import wewnątrz funkcji
+        api = API(pexels_api_key)
+        logging.info(f"Wyszukiwanie {count} obrazków w Pexels dla zapytania: '{query}'")
+        
+        api.search(query, page=1, results_per_page=count)
+        photos = api.get_entries()
+
+        if photos:
+            # Zwracamy listę ze słownikami, zawierającymi potrzebne dane
+            results = [
+                {
+                    "id": photo.id,
+                    "photographer": photo.photographer,
+                    "preview_url": photo.src['medium'], # Mały URL do podglądu w siatce
+                    "original_url": photo.original      # Duży URL do pobrania i publikacji
+                } 
+                for photo in photos
+            ]
+            logging.info(f"Znaleziono {len(results)} obrazków.")
+            return results
+        else:
+            logging.warning(f"Nie znaleziono żadnego obrazka dla zapytania: '{query}'")
+            return []
+    except Exception as e:
+        logging.error(f"Błąd podczas komunikacji z API Pexels: {e}")
+        return []
+
+
 # Ten fragment dodaj na samym końcu pliku generator.py
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generator artykułów AI.")
