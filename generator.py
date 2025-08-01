@@ -152,7 +152,8 @@ def step3_write_article(research_data, outline, site_config):
     # Bazowy prompt
     final_prompt = textwrap.dedent(f"""
         Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
-        **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty. Jedynie na początku, w pierwszym akapicie zrób typowy lead, aby tam konkretne informacje zamieścić**
+        **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty. Na początku artykułu stwórz krótki, uderzający lead (maksymalnie 2-3 zdania), który od razu przedstawia najważniejszą informację i jej kluczową, często zaskakującą konsekwencję. Unikaj powolnego wprowadzania w temat.**
+
 
         **ZEBRANE DANE (Użyj ich do wypełnienia treści):**
         {research_data}
