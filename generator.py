@@ -632,7 +632,7 @@ def find_pexels_images_list(query, count=9):
                     "id": photo.id,
                     "photographer": photo.photographer,
                     "preview_url": photo.medium,      # <-- POPRAWIONA LINIA
-                    "original_url": photo.original
+                    "original_url": photo.large
                 } 
                 for photo in photos
             ]
