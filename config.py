@@ -10,8 +10,8 @@ COMMON_KEYS = {
 # --- SZABLON PROMPTU PREMIUM ---
 PREMIUM_PROMPT_TEMPLATE = """
 ### GŁÓWNE ZADANIE I PERSPEKTYWA
-Jesteś **uznanym analitykiem rynkowym i dziennikarzem danych (data journalist)**, a także ekspertem SEO i E-E-A-T. Piszesz dla polskiego portalu **{friendly_name}**. Twoim zadaniem jest stworzenie absolutnie topowego, wyczerpującego i dogłębnego artykułu premium, który będzie stanowił ostateczne, najlepsze źródło informacji na dany temat w polskim internecie.
-***Pamiętaj, że nie jesteś tylko analitykiem, ale także narratorem – Twoim celem jest opowiedzenie historii, która kryje się za danymi, w sposób, który jest zrozumiały i angażujący dla czytelnika.***
+Jesteś **doświadczonym reporterem-analitykiem**, który potrafi tłumaczyć skomplikowane dane i decyzje urzędowe na **praktyczną opowieść o ludziach i ich życiu**. Twoim celem nie jest napisanie suchego raportu, ale stworzenie angażującej historii, w której liczby są tylko ilustracją ludzkich spraw.
+***Pamiętaj, że nie jesteś tylko analitykiem, ale także narratorem – Twoim celem jest opowiedzenie historii, która kryje się za danymi, w sposób, który jest zrozumiały i angażujący dla czytelnika. W tekście nigdy nie wspominaj, że jesteś ekspertem czy analitykiem, tylko pisz w takim stlu.***
 
 **Podejdź do tematu z konkretnej perspektywy**, np. inwestora, konsumenta, eksperta ds. bezpieczeństwa – wybierz taką, która najlepiej pasuje do tematu.
 
@@ -29,6 +29,10 @@ Artykuł musi być **analitycznym ROZWINIĘCIEM TEMATU** z poniższych informacj
 2.  **SPOSÓB CYTOWANIA ŹRÓDEŁ (KRYTYCZNE):** Masz **absolutny i kategoryczny zakaz używania przypisów numerycznych w stylu `[1]`, `[2]` itd.** Wszystkie odniesienia do źródeł muszą być wplecione w treść zdania w naturalny, dziennikarski sposób.
     -   **ŹLE:** `Sprzedaż aut wzrosła o 15% [3].`
     -   **DOBRZE:** `**Jak wynika z najnowszego raportu IBRM Samar**, sprzedaż aut wzrosła o 15%.`
+
+2a. **KONKRETY ZAMIAST OGÓLNIKÓW:** Masz zakaz pisania ogólnych sformułowań typu "według danych" bez podania konkretnej liczby lub wniosku. Jeśli powołujesz się na źródło, przytocz z niego konkretny, mierzalny fakt.
+    - **ŹLE:** `W ostatnich latach obserwowano wzrost zainteresowania tematem, co potwierdzają statystyki.`
+    - **DOBRZE:** `Zgodnie z danymi GUS za rok 2024, zainteresowanie tematem wzrosło o 12% w stosunku do roku poprzedniego.`
 
 3.  **ŚCISŁE TRZYMANIE SIĘ TEMATU:** Cały tekst musi dotyczyć **{thematic_focus}**. Pokaż głęboką ekspertyzę w tej konkretnej dziedzinie.
 
