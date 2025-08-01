@@ -3,3 +3,4 @@ requests
 eventregistry
 beautifulsoup4
 openai
+pexels-api-wrapper
