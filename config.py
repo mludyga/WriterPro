@@ -5,6 +5,7 @@ import os
 COMMON_KEYS = {
     "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
     "PERPLEXITY_API_KEY": os.getenv("PERPLEXITY_API_KEY")
+    "PEXELS_API_KEY": os.getenv("PEXELS_API_KEY") # <-- To jest nowa, dodana linia
 }
 
 # --- SZABLON PROMPTU PREMIUM ---
