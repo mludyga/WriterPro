@@ -616,7 +616,8 @@ def find_pexels_images_list(query, count=9):
         return []
 
     try:
-        from pexels_api import API # Import wewnątrz funkcji
+        # Ten import musi być tutaj, aby uniknąć błędów, gdy biblioteka nie jest zainstalowana
+        from pexels_api import API
         api = API(pexels_api_key)
         logging.info(f"Wyszukiwanie {count} obrazków w Pexels dla zapytania: '{query}'")
         
@@ -624,13 +625,14 @@ def find_pexels_images_list(query, count=9):
         photos = api.get_entries()
 
         if photos:
-            # Zwracamy listę ze słownikami, zawierającymi potrzebne dane
+            # POPRAWKA: Zmieniono photo.src['medium'] na photo.medium,
+            # ponieważ ta biblioteka przechowuje URL bezpośrednio w atrybucie.
             results = [
                 {
                     "id": photo.id,
                     "photographer": photo.photographer,
-                    "preview_url": photo.src['medium'], # Mały URL do podglądu w siatce
-                    "original_url": photo.original      # Duży URL do pobrania i publikacji
+                    "preview_url": photo.medium,      # <-- POPRAWIONA LINIA
+                    "original_url": photo.original
                 } 
                 for photo in photos
             ]
