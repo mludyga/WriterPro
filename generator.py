@@ -398,38 +398,61 @@ def run_news_process(site_key, topic_source, manual_topic_data, category_id=None
         title_tag.decompose()
     post_content = str(soup)
 
-    # --- Wyszukiwanie mediów do ewentualnego embedowania ---
-    from urllib.parse import urlparse
+    # --- POPRAWIONA LOGIKA KATEGORII ---
+    all_categories = get_all_wp_categories(site_config)
+    
+    # Jeśli kategoria nie została przekazana ręcznie, poproś AI o wybór
+    if category_id is None:
+        if all_categories:
+            logging.info("Kategoria nie została wybrana ręcznie. Uruchamiam wybór przez AI.")
+            # AI zwraca listę nazw, np. ["Wiadomości"]
+            chosen_category_names = choose_category_ai(post_title, post_content, list(all_categories.keys()))
+            
+            # Bierzemy pierwszą nazwę z listy zwróconej przez AI
+            if chosen_category_names:
+                chosen_name = chosen_category_names[0]
+                # Znajdujemy ID dla tej nazwy w naszym słowniku kategorii
+                category_id = all_categories.get(chosen_name)
+                if category_id:
+                    logging.info(f"AI wybrało kategorię: '{chosen_name}' (ID: {category_id})")
+                else:
+                    logging.warning(f"AI wybrało kategorię '{chosen_name}', ale nie znaleziono jej ID. Używam domyślnej.")
+                    category_id = 1 # Domyślne ID (np. "Bez kategorii")
+            else:
+                logging.warning("AI nie zwróciło poprawnej nazwy kategorii. Używam domyślnej.")
+                category_id = 1
+        else:
+            logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej (ID: 1).")
+            category_id = 1
+    else:
+        logging.info(f"Użyto ręcznie wybranej kategorii o ID: {category_id}")
+    # ------------------------------------
 
-    def extract_embeds_and_images(html_content):
-        soup = BeautifulSoup(html_content, 'html.parser')
-        youtube_links, twitter_links, facebook_links, images = [], [], [], []
+    # Tagi (bez zmian)
+    tags_list = generate_tags_ai(post_title, post_content)
+    tag_ids = [get_or_create_term_id(tag, 'tags', site_config) for tag in tags_list if tag]
 
-        for a in soup.find_all('a', href=True):
-            href = a['href']
-            netloc = urlparse(href).netloc
-            if "youtube.com" in netloc or "youtu.be" in netloc:
-                youtube_links.append(href)
-            elif "twitter.com" in netloc or "x.com" in netloc:
-                twitter_links.append(href)
-            elif "facebook.com" in netloc:
-                facebook_links.append(href)
+    # Obraz wyróżniony (bez zmian)
+    featured_media_id = upload_image_to_wp(topic_data.get('image_url'), post_title, site_config)
 
-        for img in soup.find_all('img'):
-            src = img.get('src')
-            alt = img.get('alt', '')
-            if src:
-                images.append({'src': src, 'alt': alt})
+    # Przygotowanie danych do publikacji (bez zmian)
+    data_to_publish = {
+        'title': post_title,
+        'content': post_content,
+        'status': 'publish',
+        'categories': [category_id], # Przekazujemy już poprawne ID
+        'tags': [tid for tid in tag_ids if tid]
+    }
+    if featured_media_id:
+        data_to_publish['featured_media'] = featured_media_id
 
-        return {
-            "youtube": youtube_links,
-            "twitter": twitter_links,
-            "facebook": facebook_links,
-            "images": images
-        }
+    # Publikacja (bez zmian)
+    result = publish_to_wp(data_to_publish, site_config)
+    if result and result.get('link'):
+        return f"Artykuł newsowy opublikowany! Link: {result.get('link')}"
+    else:
+        return "BŁĄD: Publikacja newsowego artykułu nie powiodła się."
 
-    # Zastosowanie:
-    media_references = extract_embeds_and_images(post_content)
 
     def insert_youtube_embeds(html, youtube_links):
         soup = BeautifulSoup(html, 'html.parser')
@@ -655,4 +678,5 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     run_from_command_line(args)
+
 
