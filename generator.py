@@ -606,7 +606,7 @@ def run_from_command_line(args):
 
     logging.info(result)
 
-def find_pexels_images_list(query, count=9):
+def find_pexels_images_list(query, count=15):
     """
     Wyszukuje w Pexels listę zdjęć i zwraca ich dane (ID, URL-e, autor).
     """
@@ -655,3 +655,4 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     run_from_command_line(args)
+
