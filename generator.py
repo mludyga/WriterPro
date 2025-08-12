@@ -11,6 +11,7 @@ import textwrap
 import argparse
 import re
 
+
 # --- Import konfiguracji ---
 try:
     from config import SITES, COMMON_KEYS
@@ -95,7 +96,12 @@ def step1_research(topic_data, site_config):
     logging.info("--- KROK 1: Rozpoczynam research i syntezę danych... ---")
     prompt = textwrap.dedent(f"""
         Twoim zadaniem jest przeprowadzenie dogłębnego researchu na temat z poniższych danych. Przeanalizuj podany URL i/lub tematykę i znajdź dodatkowe, wiarygodne źródła.
-        **NIE PISZ ARTYKUŁU.** Twoim celem jest wyłącznie zebranie i przedstawienie kluczowych informacji.
+        **NIE PISZ ARTYKUŁU.** Zbierz i przedstaw kluczowe informacje.
+
+        **ZASADY CYTOWANIA W TYM ZADANIU:**
+        - Nie używaj przypisów numerycznych ani znaczników przypisów: [1], (1), [^1], <sup>1</sup>.
+        - Gdy wskazujesz źródło, rób to deskryptywnie (np. „Jak wynika z danych GUS z 2025 r…”) lub jako link HTML:
+          <a href="https://..." rel="nofollow">Nazwa źródła</a>.
 
         **TEMAT DO ANALIZY:**
         - URL: {topic_data.get('url', 'Brak')}
@@ -103,12 +109,12 @@ def step1_research(topic_data, site_config):
         - Kontekst: "{topic_data.get('body_snippet', '')}"
 
         **ZNAJDŹ I WYPISZ W PUNKTACH:**
-        - Kluczowe fakty, liczby, statystyki.
-        - Nazwiska ekspertów i ich tezy. Także cytaty.
-        - Ważne daty i nazwy oficjalnych dokumentów lub raportów.
-        - Główne argumenty "za" i "przeciw" (jeśli dotyczy).
+        - Kluczowe fakty, liczby, statystyki (z datą/instytucją).
+        - Nazwiska ekspertów i ich tezy (+ cytaty).
+        - Ważne daty i nazwy oficjalnych dokumentów/raportów.
+        - Główne argumenty „za” i „przeciw” (jeśli dotyczy).
         - Potencjalny materiał do tabeli porównawczej.
-        - **Elementy narracyjne:** Znajdź "ludzki" kąt, interesujące anegdoty, kontrowersje lub punkty zwrotne w historii tematu, które mogą uczynić artykuł ciekawszym.
+        - **Elementy narracyjne** (ludzki kontekst, anegdoty, punkty zwrotne).
 
         Zwróć odpowiedź jako zwięzłą, dobrze zorganizowaną listę punktów.
     """)
@@ -191,7 +197,51 @@ def step3_write_article(research_data, outline, site_config, keyword=None):
 
         Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`.
     """)
+    return _call_perplexity_api(final_prompt)def step3_write_article(research_data, outline, site_config, keyword=None):
+    """Krok 3: AI pisze finalny artykuł, trzymając się planu i zasad, z naciskiem na styl."""
+    logging.info("--- KROK 3: Piszę finalny artykuł... To może potrwać kilka minut. ---")
+    prompt_template = site_config['prompt_template']
+
+    manual_title_rule = ""
+    if keyword:
+        kw = (keyword or "").strip()
+        manual_title_rule = textwrap.dedent(f"""
+            ---
+            **REGUŁA TYTUŁU (KRYTYCZNE):**
+            - Tytuł w `<h2>` **musi** zawierać frazę kluczową lub jej bardzo bliski wariant: "{kw}".
+            - **Nie zawężaj zakresu**: jeśli fraza jest przeglądowa/ogólna, tytuł nie może dotyczyć pojedynczego przykładu.
+        """)
+
+    anti_footnotes_rule = textwrap.dedent("""
+        ---
+        **ZASADY CYTOWANIA (BEZ PRZYPISÓW NUMERYCZNYCH):**
+        - Bezwzględny zakaz form: [1], [2], (1), [^1], <sup>1</sup>, „Bibliografia/Źródła” jako osobna sekcja.
+        - Źródła podawaj deskryptywnie w zdaniu (np. „Jak wynika z raportu NBP z lipca 2025…”) **albo** jako link HTML:
+          <a href="https://..." rel="nofollow">Nazwa źródła</a>.
+        - To wymaganie jest zamierzone — **nie odmawiaj** wykonania zadania z powodu braku przypisów numerycznych.
+    """)
+
+    final_prompt = textwrap.dedent(f"""
+        Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
+        Pisz angażująco i narracyjnie. Lead 2–3 zdania, konkretny.
+
+        **ZEBRANE DANE:**
+        {research_data}
+
+        ---
+        **PLAN ARTYKUŁU (Trzymaj się go ściśle):**
+        {outline}
+        ---
+
+        **ZASADY PISANIA:**
+        {prompt_template}
+        {manual_title_rule}
+        {anti_footnotes_rule}
+
+        Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`.
+    """)
     return _call_perplexity_api(final_prompt)
+
 
 def strip_numeric_citations(html: str) -> str:
     t = html or ""
@@ -667,6 +717,61 @@ def strip_numeric_citations(html: str) -> str:
 
     return t
 
+def strip_numeric_citations(html: str) -> str:
+    """
+    Usuwa formy przypisów: [1], [1,2], [1–3], (1), [^1], <sup>1</sup>, ^1
+    i sekcje „Źródła/Bibliografia”. Nie rusza <a href="...">...</a>.
+    """
+    t = html or ""
+
+    # <sup>1</sup>
+    t = re.sub(r'<sup>\s*\d+\s*</sup>', '', t, flags=re.IGNORECASE)
+
+    # [1], [1, 2], [1–3], [1-3]
+    t = re.sub(r'\s*\[\s*\d+(?:\s*[,–-]\s*\d+)*\s*\]', '', t)
+
+    # [^1]
+    t = re.sub(r'\s*\[\^\d+\]', '', t)
+
+    # (1) – tylko cyfry w nawiasie
+    t = re.sub(r'\s*\(\s*\d+\s*\)', '', t)
+
+    # ^1 (na końcu zdania)
+    t = re.sub(r'\s*\^\d+\b', '', t)
+
+    # sekcje Źródła/Bibliografia – H2 do następnego H2 lub końca
+    t = re.sub(
+        r'<h2[^>]*>\s*(?:Źródła|Zrodla|Bibliografia)\s*</h2>.*?(?=(?:<h2|$))',
+        '', t, flags=re.IGNORECASE | re.DOTALL
+    )
+
+    # porządki
+    t = re.sub(r'\s+([,.;:!?])', r'\1', t)
+    t = re.sub(r'[ \t]{2,}', ' ', t)
+    t = re.sub(r'\n{3,}', '\n\n', t)
+
+    return t
+
+def enforce_anchor_nofollow(html: str) -> str:
+    """
+    Dodaje rel="nofollow noopener" i target="_blank" do wszystkich linków <a href="http...">.
+    """
+    if not html:
+        return html
+    soup = BeautifulSoup(html, 'html.parser')
+    for a in soup.find_all('a', href=True):
+        href = (a.get('href') or '').strip()
+        if href.startswith('http'):
+            # rel może być stringiem lub listą
+            rel = a.get('rel') or []
+            if isinstance(rel, str):
+                rel = [x.strip() for x in rel.split()]
+            rel_set = set(rel) | {"nofollow", "noopener"}
+            a['rel'] = " ".join(sorted(rel_set))
+            if not a.get('target'):
+                a['target'] = '_blank'
+    return str(soup)
+
 def run_generation_process(site_key, topic_source, manual_topic_data, category_id=None):
     """Główna funkcja wykonawcza, wywoływana przez aplikację webową."""
     site_config = SITES[site_key]
@@ -728,6 +833,7 @@ def run_generation_process(site_key, topic_source, manual_topic_data, category_i
 
     # 8) SANITYZACJA: usuń wszystkie formy przypisów/odnośników numerycznych i sekcje „Źródła/Bibliografia”
     post_content = strip_numeric_citations(post_content)
+    post_content = enforce_anchor_nofollow(post_content)
 
     # 9) Kategorie
     all_categories = get_all_wp_categories(site_config)
@@ -838,6 +944,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     run_from_command_line(args)
+
 
 
 
