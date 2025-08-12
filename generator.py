@@ -117,13 +117,16 @@ def step2_create_outline(research_data, site_config, keyword=None):
     """Krok 2: AI tworzy kreatywny i zhumanizowany plan artykułu."""
     logging.info("--- KROK 2: Tworzę kreatywny i szczegółowy plan artykułu... ---")
 
-    # Dynamiczne tworzenie instrukcji dotyczącej tytułu
+    # Instrukcja dla tytułu z prawdziwą interpolacją słowa kluczowego
+    kw = (keyword or "").strip()
     title_instruction = (
-    "1. Zaproponuj krótki i merytoryczny tytuł (maks. 70 znaków). "
-    "Tytuł **musi zawierać dokładną frazę kluczową**: '{keyword}'. "
-    "Nie dodawaj zbędnych ozdobników. Unikaj clickbaitu. "
-    "Tytuł powinien być jasny, SEO-friendly i zawierać najważniejsze słowa. "
-    "Umieść go w tagu `<h2>`."
+        f"1. Zaproponuj krótki i merytoryczny tytuł (maks. 70 znaków). "
+        + (f"Tytuł **musi zawierać frazę kluczową lub jej bardzo bliski wariant**: '{kw}'. " if kw else "")
+        + "Nie zawężaj zakresu tematu względem hasła użytkownika: jeśli hasło jest ogólne/przeglądowe, "
+          "to tytuł też ma być ogólny/przeglądowy (np. lista, przegląd, porównanie), "
+          "a nie o jednej atrakcji/miejscu/firmie. "
+          "Dopuszczalna jest parafraza i doprecyzowanie dla SEO. "
+          "Umieść tytuł w tagu <h2> i stosuj polskie zasady kapitalizacji."
     )
 
     prompt = textwrap.dedent(f"""
@@ -136,49 +139,51 @@ def step2_create_outline(research_data, site_config, keyword=None):
         {title_instruction}
         2.  **Stwórz unikalną strukturę artykułu.** Nie trzymaj się jednego szablonu. Dobierz sekcje i ich kolejność tak, aby jak najlepiej opowiedzieć historię i wyjaśnić temat czytelnikowi.
         3.  Zaproponuj **kreatywne i intrygujące tytuły dla poszczególnych sekcji** (`<h2>`, `<h3>`), a nie tylko generyczne opisy typu "Analiza danych".
-        4.  **Inteligentnie dobierz elementy z bardzo wartościowym contentem.** Zastanów się, czy do TEGO KONKRETNEGO tematu pasują takie bloki jak: **tabela porównawcza**, **analiza historyczna**, **praktyczne porady** lub **box z kluczowymi informacjami**. Włącz je do planu **tylko wtedy, gdy mają sens** i realnie wzbogacają treść, a nie dlatego, że musisz.
-        5.  Pod każdym nagłówkiem napisz w 1-2 zdaniach, co dokładnie zostanie w tej sekcji opisane.
-        6.  Nie używaj w podtytułach słów: "Wstęp", "Zakończenie", "Prolog", "Epilog" "Premium", "Box". Czytelne nagłówki tylko, naturalnie wplecione.
-
+        4.  **Inteligentnie dobierz elementy z bardzo wartościowym contentem.** Zastanów się, czy do TEGO KONKRETNEGO tematu pasują takie bloki jak: **tabela porównawcza**, **analiza historyczna**, **praktyczne porady** lub **box z kluczowymi informacjami**. Włącz je do planu **tylko wtedy, gdy mają sens**.
+        5.  Pod każdym nagłówkiem napisz w 1–2 zdaniach, co dokładnie zostanie w tej sekcji opisane.
+        6.  Nie używaj w podtytułach słów: "Wstęp", "Zakończenie", "Prolog", "Epilog" "Premium", "Box".
+        
         Zwróć tylko i wyłącznie kompletny, gotowy do realizacji plan artykułu.
     """)
     return _call_perplexity_api(prompt)
 
-def step3_write_article(research_data, outline, site_config):
+
+def step3_write_article(research_data, outline, site_config, keyword=None):
     """Krok 3: AI pisze finalny artykuł, trzymając się planu i zasad, z naciskiem na styl."""
     logging.info("--- KROK 3: Piszę finalny artykuł... To może potrwać kilka minut. ---")
     prompt_template = site_config['prompt_template']
 
+    manual_title_rule = ""
+    if keyword:
+        kw = keyword.strip()
+        manual_title_rule = textwrap.dedent(f"""
+            ---
+            **REGUŁA TYTUŁU (KRYTYCZNE):**
+            - Tytuł w `<h2>` **musi** zawierać frazę kluczową lub jej bardzo bliski wariant: "{kw}".
+            - **Nie zawężaj zakresu**: jeśli fraza jest przeglądowa/ogólna (np. „Najlepsze atrakcje województwa śląskiego”), 
+              to tytuł nie może dotyczyć pojedynczej atrakcji/miejsca. Ma pozostać przeglądowy.
+            - Dopuszczalna parafraza i doprecyzowanie dla SEO, ale kluczowe słowa muszą się zgadzać tematycznie.
+        """)
+
     # Bazowy prompt
     final_prompt = textwrap.dedent(f"""
         Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
-        **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty. Na początku artykułu stwórz krótki, uderzający lead (maksymalnie 2-3 zdania), który od razu przedstawia najważniejszą informację i jej kluczową, często zaskakującą konsekwencję. Unikaj powolnego wprowadzania w temat.**
+        **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty. Na początku artykułu stwórz krótki, uderzający lead (maksymalnie 2–3 zdania), który od razu przedstawia najważniejszą informację i jej konsekwencję.**
 
-
-        **ZEBRANE DANE (Użyj ich do wypełnienia treści):**
+        **ZEBRANE DANE:**
         {research_data}
 
         ---
-        **PLAN ARTYKUŁU (Trzymaj się go ściśle, włącznie z kreatywnymi tytułami sekcji):**
+        **PLAN ARTYKUŁU (Trzymaj się go ściśle):**
         {outline}
         ---
 
-        **ZASADY PISANIA (Zastosuj je do tworzenia finalnego tekstu):**
+        **ZASADY PISANIA:**
         {prompt_template}
+        {manual_title_rule}
+
+        Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`, zgodnie z planem i wszystkimi zasadami.
     """)
-
-    # Dodajemy tryb rozszerzony, jeśli aktywny
-    if site_config.get("writing_mode") == "extended":
-        final_prompt += textwrap.dedent("""
-            ---
-            **DODATKOWE INSTRUKCJE (TYLKO jeśli mają wartość merytoryczną):**
-            - Jeśli w źródłach znajdziesz treści z YouTube / Facebook / X (Twitter), które wzbogacają artykuł, dodaj je w treści jako cytowany link (np. https://www.youtube.com/watch?v=...) z krótkim opisem kontekstu.
-            - Jeżeli znajdziesz dobrze pasujący obrazek, zaproponuj jego osadzenie: użyj znacznika `<img src='LINK' alt='Opis obrazka'>` i dodaj podpis źródła pod obrazkiem.
-            - Nie wymuszaj linków ani grafik – dodaj je tylko, jeśli naprawdę pogłębiają przekaz i są związane z tematem.
-        """)
-
-    # Końcówka polecenia
-    final_prompt += "\n\nNapisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`, zgodnie z przekazanym planem i wszystkimi zasadami."
     return _call_perplexity_api(final_prompt)
 
 
@@ -678,5 +683,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     run_from_command_line(args)
+
 
 
