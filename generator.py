@@ -1,4 +1,4 @@
-# generator.py — wersja pełna, gotowa do podmiany
+# generator.py — wersja pełna, zgodna z Python 3.8/3.9
 
 import json
 import logging
@@ -8,6 +8,7 @@ import textwrap
 import re
 import time
 from datetime import datetime, timedelta
+from typing import Optional, List
 
 import requests
 import openai
@@ -53,7 +54,7 @@ STOPWORDS_PL = {
 # -----------------------
 # POMOCNICZE: Perplexity
 # -----------------------
-def _call_perplexity_api(prompt: str) -> str | None:
+def _call_perplexity_api(prompt: str) -> Optional[str]:
     headers = {
         "Authorization": f"Bearer {COMMON_KEYS.get('PERPLEXITY_API_KEY')}",
         "Content-Type": "application/json",
@@ -92,7 +93,7 @@ def strip_numeric_citations(html: str) -> str:
     t = re.sub(r'\s*\[\^\d+\]', '', t)
 
     # (1) – tylko cyfry w nawiasie
-    t = re.sub(r'\s*\(\s*\d+\s*\)', '', t)
+    t = re.sub(r'\s*\(\s*\d+\\s*\)', '', t)
 
     # ^1 (np. na końcu zdania)
     t = re.sub(r'\s*\^\d+\b', '', t)
@@ -131,7 +132,7 @@ def enforce_anchor_nofollow(html: str) -> str:
     return str(soup)
 
 
-def _extract_keywords_pl(s: str) -> list[str]:
+def _extract_keywords_pl(s: str) -> List[str]:
     words = re.findall(r"[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż0-9]+", (s or "").lower())
     return [w for w in words if len(w) >= 4 and w not in STOPWORDS_PL]
 
@@ -163,8 +164,8 @@ def rewrite_title_to_match_keyword(bad_title: str, keyword: str) -> str:
                     "(lub jej bardzo bliskim wariantem), nie zawężał zakresu, "
                     "stosował polskie zasady kapitalizacji i miał maks. 70 znaków. "
                     "Zwróć wyłącznie tytuł w tagu <h2>.\n"
-                    f"FRAZA: {keyword}\n"
-                    f"AKTUALNY TYTUŁ: {bad_title}"
+                    "FRAZA: " + keyword + "\n"
+                    "AKTUALNY TYTUŁ: " + bad_title
                 )
             }]
         )
@@ -189,6 +190,42 @@ def get_auth_header(site_config):
     credentials = f"{site_config.get('wp_username')}:{site_config.get('wp_password')}"
     token = base64.b64encode(credentials.encode()).decode("utf-8")
     return {"Authorization": f"Basic {token}"}
+
+
+def fetch_categories(site_config):
+    """
+    Pobiera wszystkie dostępne kategorie z WordPressa (lista krotek: [(id, name), ...]).
+    Zgodne z Twoim app.py (ręczny wybór kategorii).
+    """
+    base_url = site_config.get("wp_api_url_base")
+    if not base_url:
+        logging.warning("Brak wp_api_url_base w konfiguracji portalu.")
+        return []
+
+    url = f"{base_url}/categories"
+    headers = get_auth_header(site_config)
+
+    all_categories = []
+    page = 1
+    while True:
+        try:
+            r = requests.get(
+                url,
+                headers=headers,
+                params={"per_page": 100, "page": page},
+                timeout=20
+            )
+            r.raise_for_status()
+            data = r.json()
+            if not data:
+                break
+            all_categories.extend([(cat["id"], cat["name"]) for cat in data])
+            page += 1
+        except Exception as e:
+            logging.warning(f"Nie udało się pobrać kategorii z {url}: {e}")
+            break
+
+    return all_categories
 
 
 def get_event_registry_topics(site_config):
