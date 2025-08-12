@@ -461,174 +461,104 @@ def step_news_article(research_data, site_config, topic_data):
 
 def run_news_process(site_key, topic_source, manual_topic_data, category_id=None):
     """
-    Workflow dla newsowego artykułu łącznie z publikacją na WP.
+    Workflow dla artykułu newsowego (krótsza forma) + publikacja na WP.
+    Zabezpieczenia:
+    - kontrola zgodności tytułu z ręcznym hasłem (jeśli podano),
+    - usunięcie przypisów [1]/(1)/<sup>1</sup>/[^1] itd.,
+    - dodanie rel="nofollow noopener" i target="_blank" do <a>.
     """
     site_config = SITES[site_key]
     site_config['site_key'] = site_key
 
-    # Pobierz dane tematu
+    # 1) Temat (ręczny lub z EventRegistry)
     topic_data = manual_topic_data if topic_source == 'Ręcznie' else get_event_registry_topics(site_config)
     if not topic_data:
         return "BŁĄD: Nie udało się uzyskać tematu."
 
-    # Newsowy research
+    # 2) Research
     research_data = step1_research(topic_data, site_config)
     if not research_data:
         return "BŁĄD: Research nie powiódł się."
 
-    # Generowanie krótkiego artykułu newsowego
-    news_html = step_news_article(research_data, site_config, topic_data)
+    # 3) Fraza do tytułu (jeśli temat ręczny)
+    keyword_for_title = None
+    if topic_source == 'Ręcznie' and manual_topic_data:
+        keyword_for_title = (manual_topic_data.get('title') or '').strip()
+        if keyword_for_title:
+            logging.info(f"[NEWS] Ręczna fraza tytułu: '{keyword_for_title}'")
+
+    # 4) Krótki artykuł newsowy
+    # (Jeśli masz wersję step_news_article z blokiem 'anti_footnotes_rule', to super;
+    #  jeżeli nie – i tak oczyścimy przypisy w post-process.)
+    news_html = step_news_article(research_data, site_config, topic_data, keyword=keyword_for_title) \
+                if 'step_news_article' in globals() else None
     if not news_html:
         return "BŁĄD: Pisanie newsowego artykułu nie powiodło się."
 
-    # Parsowanie i przygotowanie do publikacji
+    # 5) Parsowanie i kontrola tytułu
     soup = BeautifulSoup(news_html, 'html.parser')
-    title_tag = soup.find('h2')
-    post_title = title_tag.get_text(strip=True) if title_tag else topic_data.get('title', 'Brak tytułu')
-    if title_tag:
-        title_tag.decompose()
+    h2 = soup.find('h2')
+    current_title = h2.get_text(strip=True) if h2 else (topic_data.get('title') or 'Brak tytułu')
+
+    if keyword_for_title and not title_respects_keyword(current_title, keyword_for_title):
+        logging.info(f"[NEWS] Korekta tytułu względem frazy: '{keyword_for_title}' -> '{current_title}'")
+        fixed_h2_html = rewrite_title_to_match_keyword(current_title, keyword_for_title)  # zwraca <h2>...</h2>
+        fixed_h2_soup = BeautifulSoup(fixed_h2_html, 'html.parser')
+        if h2:
+            h2.replace_with(fixed_h2_soup)
+        else:
+            soup.insert(0, fixed_h2_soup)
+        h2 = soup.find('h2')
+        current_title = h2.get_text(strip=True) if h2 else current_title
+
+    # 6) Usuń <h2> z treści – WordPress ma własne pole tytułu
+    for x in soup.find_all('h2'):
+        x.decompose()
+
+    post_title = (current_title or topic_data.get('title') or 'Brak tytułu').strip()
     post_content = str(soup)
 
-    # --- POPRAWIONA LOGIKA KATEGORII ---
-    all_categories = get_all_wp_categories(site_config)
-    
-    # Jeśli kategoria nie została przekazana ręcznie, poproś AI o wybór
-    if category_id is None:
-        if all_categories:
-            logging.info("Kategoria nie została wybrana ręcznie. Uruchamiam wybór przez AI.")
-            # AI zwraca listę nazw, np. ["Wiadomości"]
-            chosen_category_names = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-            
-            # Bierzemy pierwszą nazwę z listy zwróconej przez AI
-            if chosen_category_names:
-                chosen_name = chosen_category_names[0]
-                # Znajdujemy ID dla tej nazwy w naszym słowniku kategorii
-                category_id = all_categories.get(chosen_name)
-                if category_id:
-                    logging.info(f"AI wybrało kategorię: '{chosen_name}' (ID: {category_id})")
-                else:
-                    logging.warning(f"AI wybrało kategorię '{chosen_name}', ale nie znaleziono jej ID. Używam domyślnej.")
-                    category_id = 1 # Domyślne ID (np. "Bez kategorii")
-            else:
-                logging.warning("AI nie zwróciło poprawnej nazwy kategorii. Używam domyślnej.")
-                category_id = 1
-        else:
-            logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej (ID: 1).")
-            category_id = 1
-    else:
-        logging.info(f"Użyto ręcznie wybranej kategorii o ID: {category_id}")
-    # ------------------------------------
+    # 7) Post-process: usuń przypisy + dołóż nofollow
+    post_content = strip_numeric_citations(post_content)
+    post_content = enforce_anchor_nofollow(post_content)
 
-    # Tagi (bez zmian)
-    tags_list = generate_tags_ai(post_title, post_content)
-    tag_ids = [get_or_create_term_id(tag, 'tags', site_config) for tag in tags_list if tag]
-
-    # Obraz wyróżniony (bez zmian)
-    featured_media_id = upload_image_to_wp(topic_data.get('image_url'), post_title, site_config)
-
-    # Przygotowanie danych do publikacji (bez zmian)
-    data_to_publish = {
-        'title': post_title,
-        'content': post_content,
-        'status': 'publish',
-        'categories': [category_id], # Przekazujemy już poprawne ID
-        'tags': [tid for tid in tag_ids if tid]
-    }
-    if featured_media_id:
-        data_to_publish['featured_media'] = featured_media_id
-
-    # Publikacja (bez zmian)
-    result = publish_to_wp(data_to_publish, site_config)
-    if result and result.get('link'):
-        return f"Artykuł newsowy opublikowany! Link: {result.get('link')}"
-    else:
-        return "BŁĄD: Publikacja newsowego artykułu nie powiodła się."
-
-
-    def insert_youtube_embeds(html, youtube_links):
-        soup = BeautifulSoup(html, 'html.parser')
-        for link in youtube_links:
-            for a_tag in soup.find_all('a', href=link):
-                iframe = soup.new_tag("iframe", width="560", height="315", frameborder="0", allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share", allowfullscreen=True)
-                # Obsługa short i long URL
-                video_id = None
-                if "watch?v=" in link:
-                    video_id = link.split("watch?v=")[-1].split("&")[0]
-                elif "youtu.be/" in link:
-                    video_id = link.split("youtu.be/")[-1].split("?")[0]
-                if video_id:
-                    iframe['src'] = f"https://www.youtube.com/embed/{video_id}"
-                    a_tag.replace_with(iframe)
-        return str(soup)
-
-    def wrap_images_with_figures(html, image_data):
-        soup = BeautifulSoup(html, 'html.parser')
-        for img_info in image_data:
-            img_tag = soup.find("img", src=img_info["src"])
-            if img_tag:
-                figure = soup.new_tag("figure")
-                figcaption = soup.new_tag("figcaption")
-                figcaption.string = f"Źródło: {img_info['src']}"
-                img_tag.wrap(figure)
-                figure.append(figcaption)
-        return str(soup)
-
-    # Zamień linki YouTube na iframe'y
-    if media_references["youtube"]:
-        post_content = insert_youtube_embeds(post_content, media_references["youtube"])
-
-    # Obuduj obrazki figure/figcaption
-    if media_references["images"]:
-        post_content = wrap_images_with_figures(post_content, media_references["images"])
-    logging.info(f"Znalezione linki do embedów: {media_references}")
-
-    # Kategorie
+    # 8) Kategorie
     all_categories = get_all_wp_categories(site_config)
     if category_id is not None:
-        logging.info(f"Użyto ręcznie wybranej kategorii o ID: {category_id}")
+        logging.info(f"[NEWS] Użyto ręcznie wybranej kategorii ID={category_id}")
     else:
-        if all_categories is None:
+        if not all_categories:
+            logging.warning("[NEWS] Nie udało się pobrać kategorii z WP. Domyślne ID=1.")
             category_id = 1
         else:
-            chosen_cat = choose_category_ai(post_title, post_content, list(all_categories.keys()))
-            if isinstance(chosen_cat, list) and chosen_cat:
-                chosen_name = chosen_cat[0]
-            elif isinstance(chosen_cat, str):
-                chosen_name = chosen_cat
-            else:
-                chosen_name = "Bez kategorii"
+            chosen_names = choose_category_ai(post_title, post_content, list(all_categories.keys()))
+            chosen_name = chosen_names[0] if isinstance(chosen_names, list) and chosen_names else "Bez kategorii"
             category_id = all_categories.get(chosen_name, 1)
 
-    # Tagi
-    tags_list = generate_tags_ai(post_title, post_content)
-    tag_ids = [get_or_create_term_id(tag, 'tags', site_config) for tag in tags_list]
+    # 9) Tagi
+    tags_list = generate_tags_ai(post_title, post_content) or []
+    tag_ids = [tid for tid in (get_or_create_term_id(tag, 'tags', site_config) for tag in tags_list) if tid]
 
-    # Obraz wyróżniony
+    # 10) Obraz wyróżniony (jeśli mamy URL z ER/ręcznie)
     featured_media_id = upload_image_to_wp(topic_data.get('image_url'), post_title, site_config)
 
-    # Przygotowanie payloadu
+    # 11) Publikacja
     data_to_publish = {
         'title': post_title,
         'content': post_content,
         'status': 'publish',
         'categories': [category_id],
-        'tags': [tid for tid in tag_ids if tid]
+        'tags': tag_ids
     }
     if featured_media_id:
         data_to_publish['featured_media'] = featured_media_id
 
-    # Publikacja
     result = publish_to_wp(data_to_publish, site_config)
     if result and result.get('link'):
         return f"Artykuł newsowy opublikowany! Link: {result.get('link')}"
     else:
         return "BŁĄD: Publikacja newsowego artykułu nie powiodła się."
 
-# krótka lista stop-słów, żeby wyłuskać sensowne tokeny z frazy
-STOPWORDS_PL = {
-    "i","oraz","w","we","na","do","z","ze","o","u","od","pod","nad","przy","po","za",
-    "jest","są","to","tych","ten","ta","te","tę","naj","dla","roku","województwa"
-}
 
 def _extract_keywords_pl(s: str):
     words = re.findall(r"[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż0-9]+", (s or "").lower())
@@ -944,6 +874,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     run_from_command_line(args)
+
 
 
 
