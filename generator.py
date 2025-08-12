@@ -9,6 +9,7 @@ import openai
 import base64
 import textwrap
 import argparse
+import re
 
 # --- Import konfiguracji ---
 try:
@@ -155,20 +156,25 @@ def step3_write_article(research_data, outline, site_config, keyword=None):
 
     manual_title_rule = ""
     if keyword:
-        kw = keyword.strip()
+        kw = (keyword or "").strip()
         manual_title_rule = textwrap.dedent(f"""
             ---
             **REGUŁA TYTUŁU (KRYTYCZNE):**
             - Tytuł w `<h2>` **musi** zawierać frazę kluczową lub jej bardzo bliski wariant: "{kw}".
-            - **Nie zawężaj zakresu**: jeśli fraza jest przeglądowa/ogólna (np. „Najlepsze atrakcje województwa śląskiego”), 
-              to tytuł nie może dotyczyć pojedynczej atrakcji/miejsca. Ma pozostać przeglądowy.
-            - Dopuszczalna parafraza i doprecyzowanie dla SEO, ale kluczowe słowa muszą się zgadzać tematycznie.
+            - **Nie zawężaj zakresu**: jeśli fraza jest przeglądowa/ogólna, tytuł nie może dotyczyć pojedynczego przykładu.
         """)
 
-    # Bazowy prompt
+    anti_footnotes_rule = textwrap.dedent("""
+        ---
+        **BEZWZGLĘDNY ZAKAZ PRZYPISÓW I ODNIESIEŃ NUMERYCZNYCH:**
+        - Nie używaj form typu [1], [2], (1), [^1], <sup>1</sup>, ani sekcji „Źródła/Bibliografia”.
+        - Jeśli w researchu/planie pojawiają się takie oznaczenia – **zignoruj je** lub zastąp deskryptywną wzmianką w zdaniu (np. „Jak wynika z danych GUS…”).
+        - Nie wstawiaj surowych URL-i jako dowodów. Cytuj nazwy instytucji/raportów w tekście.
+    """)
+
     final_prompt = textwrap.dedent(f"""
         Twoim zadaniem jest napisanie kompletnego artykułu premium na podstawie poniższych danych i planu.
-        **Kluczowe jest, abyś pisał w sposób angażujący i narracyjny. Opowiadaj historię, a nie tylko referuj fakty. Na początku artykułu stwórz krótki, uderzający lead (maksymalnie 2–3 zdania), który od razu przedstawia najważniejszą informację i jej konsekwencję.**
+        **Pisz angażująco i narracyjnie. Lead 2–3 zdania, konkretny, bez wodolejstwa.**
 
         **ZEBRANE DANE:**
         {research_data}
@@ -181,10 +187,40 @@ def step3_write_article(research_data, outline, site_config, keyword=None):
         **ZASADY PISANIA:**
         {prompt_template}
         {manual_title_rule}
+        {anti_footnotes_rule}
 
-        Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`, zgodnie z planem i wszystkimi zasadami.
+        Napisz kompletny artykuł w HTML, zaczynając od tytułu w `<h2>`.
     """)
     return _call_perplexity_api(final_prompt)
+
+def strip_numeric_citations(html: str) -> str:
+    t = html or ""
+
+    # 1) <sup>1</sup>, <sup> 2 </sup>
+    t = re.sub(r'<sup>\s*\d+\s*</sup>', '', t, flags=re.IGNORECASE)
+
+    # 2) [1], [1, 2], [ 3 , 4 ,5 ]
+    t = re.sub(r'\s*\[\s*\d+(?:\s*,\s*\d+)*\s*\]', '', t)
+
+    # 3) [^1] (markdown footnotes)
+    t = re.sub(r'\s*\[\^\d+\]', '', t)
+
+    # 4) (1) — tylko jeśli w nawiasie są wyłącznie cyfry
+    t = re.sub(r'\s*\(\s*\d+\s*\)', '', t)
+
+    # 5) odnośniki typu ^1
+    t = re.sub(r'\s*\^\d+', '', t)
+
+    # 6) sekcje „Źródła” / „Bibliografia” (nagłówek + treść do kolejnego <h2> lub końca)
+    t = re.sub(r'<h2[^>]*>\s*(?:Źródła|Zrodla|Bibliografia)\s*</h2>.*?(?=(?:<h2|$))',
+               '', t, flags=re.IGNORECASE | re.DOTALL)
+
+    # 7) sprzątanie: spacje przed znakami, wielokrotne odstępy/linie
+    t = re.sub(r'\s+([,.;:!?])', r'\1', t)
+    t = re.sub(r'[ \t]{2,}', ' ', t)
+    t = re.sub(r'\n{3,}', '\n\n', t)
+
+    return t
 
 
 # --- FUNKCJE POMOCNICZE ---
@@ -543,74 +579,100 @@ def run_generation_process(site_key, topic_source, manual_topic_data, category_i
     site_config = SITES[site_key]
     site_config['site_key'] = site_key
 
+    # 1) Pozyskaj temat (ER lub ręcznie)
     topic_data = manual_topic_data if topic_source == 'Ręcznie' else get_event_registry_topics(site_config)
     if not topic_data:
         return "BŁĄD: Nie udało się uzyskać tematu. Sprawdź Event Registry lub dane wprowadzone ręcznie."
 
-    # Krok 1: Research
+    # 2) Research
     research_data = step1_research(topic_data, site_config)
-    if not research_data: return "BŁĄD: Krok 1 (Research) nie powiódł się. Sprawdź logi."
+    if not research_data:
+        return "BŁĄD: Krok 1 (Research) nie powiódł się. Sprawdź logi."
     logging.info("--- WYNIK RESEARCHU ---\n" + research_data)
 
-    # --- NOWA LOGIKA ---
-    # Sprawdzamy, czy temat jest ręczny i pobieramy słowo kluczowe
+    # 3) Fraza kluczowa do tytułu (tylko gdy temat podano ręcznie)
     keyword_for_title = None
     if topic_source == 'Ręcznie':
-        keyword_for_title = topic_data.get('title')
+        keyword_for_title = (topic_data.get('title') or '').strip()
         if keyword_for_title:
             logging.info(f"Wykryto ręczne słowo kluczowe dla tytułu: '{keyword_for_title}'")
-    # ------------------
 
-    # Krok 2: Planowanie (z przekazaniem słowa kluczowego)
+    # 4) Plan artykułu
     outline = step2_create_outline(research_data, site_config, keyword=keyword_for_title)
-    if not outline: return "BŁĄD: Krok 2 (Planowanie) nie powiódł się. Sprawdź logi."
+    if not outline:
+        return "BŁĄD: Krok 2 (Planowanie) nie powiódł się. Sprawdź logi."
     logging.info("--- WYGENEROWANY PLAN ARTYKUŁU ---\n" + outline)
-    
-    # Krok 3: Pisanie
-    generated_html = step3_write_article(research_data, outline, site_config, keyword=keyword_for_title)
-    if not generated_html: return "BŁĄD: Krok 3 (Pisanie) nie powiódł się. Sprawdź logi."
 
-    # Przetwarzanie i publikacja (reszta funkcji bez zmian)
+    # 5) Pisanie artykułu (z regułami anty-przypisowymi w promptach)
+    generated_html = step3_write_article(research_data, outline, site_config, keyword=keyword_for_title)
+    if not generated_html:
+        return "BŁĄD: Krok 3 (Pisanie) nie powiódł się. Sprawdź logi."
+
+    # 6) Parsowanie HTML i kontrola tytułu
     soup = BeautifulSoup(generated_html, 'html.parser')
-    title_tag = soup.find('h2')
-    post_title = title_tag.get_text(strip=True) if title_tag else topic_data.get('title', 'Brak tytułu')
-    if title_tag: title_tag.decompose()
+    h2_tag = soup.find('h2')
+    current_title = h2_tag.get_text(strip=True) if h2_tag else (topic_data.get('title') or 'Brak tytułu')
+
+    # Jeśli podano frazę ręcznie, sprawdź zgodność tytułu i ewentualnie popraw
+    if keyword_for_title and not title_respects_keyword(current_title, keyword_for_title):
+        logging.info(f"Tytuł wymaga korekty względem frazy: '{keyword_for_title}' -> '{current_title}'")
+        fixed_h2_html = rewrite_title_to_match_keyword(current_title, keyword_for_title)  # zwraca <h2>...</h2>
+        fixed_h2_soup = BeautifulSoup(fixed_h2_html, 'html.parser')
+        if h2_tag:
+            h2_tag.replace_with(fixed_h2_soup)
+        else:
+            soup.insert(0, fixed_h2_soup)
+        # odśwież bieżący tytuł po korekcie
+        h2_tag = soup.find('h2')
+        current_title = h2_tag.get_text(strip=True) if h2_tag else current_title
+
+    # 7) Usuń <h2> z treści (WordPress tytuł ma osobno)
+    for t in soup.find_all('h2'):
+        t.decompose()
+
+    post_title = current_title.strip() if current_title else (topic_data.get('title') or 'Brak tytułu').strip()
     post_content = str(soup)
-    
+
+    # 8) SANITYZACJA: usuń wszystkie formy przypisów/odnośników numerycznych i sekcje „Źródła/Bibliografia”
+    post_content = strip_numeric_citations(post_content)
+
+    # 9) Kategorie
     all_categories = get_all_wp_categories(site_config)
-    
     if category_id is not None:
         logging.info(f"Użyto ręcznie wybranej kategorii o ID: {category_id}")
     else:
-        if all_categories is None:
-            logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej 'Bez kategorii'.")
+        if not all_categories:
+            logging.warning("Nie udało się pobrać kategorii z WP. Używam domyślnej 'Bez kategorii' (ID: 1).")
             category_id = 1
         else:
             chosen = choose_category_ai(post_title, post_content, list(all_categories.keys()))
             chosen_name = chosen[0] if isinstance(chosen, list) and chosen else "Bez kategorii"
             category_id = all_categories.get(chosen_name, 1)
 
-    tags_list = generate_tags_ai(post_title, post_content)
-    tag_ids = [get_or_create_term_id(tag, "tags", site_config) for tag in tags_list]
-    
+    # 10) Tagi
+    tags_list = generate_tags_ai(post_title, post_content) or []
+    tag_ids = [tid for tid in (get_or_create_term_id(tag, "tags", site_config) for tag in tags_list) if tid]
+
+    # 11) Obraz wyróżniony
     featured_media_id = upload_image_to_wp(topic_data.get('image_url'), post_title, site_config)
 
+    # 12) Publikacja
     data_to_publish = {
         "title": post_title,
         "content": post_content,
         "status": "publish",
         "categories": [category_id] if category_id else [],
-        "tags": [tid for tid in tag_ids if tid]
+        "tags": tag_ids
     }
     if featured_media_id:
-        data_to_publish['featured_media'] = featured_media_id
+        data_to_publish["featured_media"] = featured_media_id
 
     result = publish_to_wp(data_to_publish, site_config)
-    
     if result and result.get('link'):
         return f"Artykuł opublikowany pomyślnie! Link: {result.get('link')}"
     else:
         return "BŁĄD: Publikacja nie powiodła się. Sprawdź logi."
+
 
 # Dodaj tę funkcję gdzieś w pliku generator.py
 def run_from_command_line(args):
@@ -683,6 +745,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     run_from_command_line(args)
+
 
 
 
