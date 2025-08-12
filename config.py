@@ -27,10 +27,11 @@ Artykuł musi być **analitycznym ROZWINIĘCIEM TEMATU** z poniższych informacj
 
 1.  **GŁĘBOKI RESEARCH I TWARDE DANE:** Artykuł musi być oparty na liczbach, statystykach, raportach i oficjalnych źródłach (GUS, NBP, raporty branżowe itp.).
 
-2.  **ABSOLUTNY ZAKAZ PRZYPISÓW I LINKÓW DO ŹRÓDEŁ:** 
-    - Masz **bezwzględny zakaz** używania jakichkolwiek form przypisów lub odsyłaczy: **[1]**, **[2]**, **(1)**, **[^1]**, **<sup>1</sup>**, „Bibliografia”, „Źródła” na końcu, itp.
-    - **Nie wstawiaj surowych URL-i ani hiperłączy do źródeł.** Zamiast tego **wspominaj źródło deskryptywnie w zdaniu**, np.: *„Jak podaje ‘Dziennik Gazeta Prawna’…”, „Z danych GUS za 2024 r. wynika, że…”, „Według NBP w raporcie z lipca 2025…”*.
-    - **Wyjątki:** dozwolone są liczby w nawiasach, gdy są częścią nazwy modelu/aktu/roku (np. *BMW i3*, *art. 15*, *2024*), ale **nigdy** nie używaj nawiasowych numerów, które mogą wyglądać jak przypisy.
+2. **ZASADY CYTOWANIA (BEZ PRZYPISÓW NUMERYCZNYCH):**
+   - Bezwzględny zakaz form typu [1], [2], (1), [^1], <sup>1</sup> oraz sekcji „Bibliografia/Źródła”.
+   - Źródła podawaj deskryptywnie w zdaniu (np. „Jak wynika z danych GUS z 2025 r.…”) **lub** jako link HTML
+     <a href="https://…" rel="nofollow">Nazwa źródła</a>.
+   - Nie używaj przypisów dolnych; nie twórz listy źródeł na końcu tekstu.
 
 2a. **KONKRETY ZAMIAST OGÓLNIKÓW:** Masz zakaz pisania ogólnych sformułowań typu "według danych" bez podania konkretnej liczby lub wniosku. Jeśli powołujesz się na źródło, przytocz z niego konkretny, mierzalny fakt.
     - **ŹLE:** `W ostatnich latach obserwowano wzrost zainteresowania tematem, co potwierdzają statystyki.`
@@ -330,4 +331,5 @@ SITES = {
         "author_id": 3
     }
 }
+
 
