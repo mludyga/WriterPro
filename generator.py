@@ -484,8 +484,7 @@ def step3_write_article(research_data, outline, site_config, keyword=None):
         ---
         **ZASADY CYTOWANIA (BEZ PRZYPISÓW NUMERYCZNYCH):**
         - Bezwzględny zakaz form: [1], [2], (1), [^1], <sup>1</sup>, „Bibliografia/Źródła” jako osobna sekcja.
-        - Źródła podawaj deskryptywnie w zdaniu (np. „Jak wynika z raportu NBP z lipca 2025…”) **albo** jako link HTML:
-          <a href="https://..." rel="nofollow">Nazwa źródła</a>.
+        - Źródła podawaj deskryptywnie w zdaniu (np. „Jak wynika z raportu NBP z lipca 2025…”).
         - To wymaganie jest zamierzone — **nie odmawiaj** wykonania zadania z powodu braku przypisów numerycznych.
     """)
 
@@ -808,3 +807,4 @@ if __name__ == "__main__":
     parser.add_argument("--source", type=str, choices=["Automatycznie", "Ręcznie"], default="Automatycznie", help="Źródło tematu.")
     args = parser.parse_args()
     run_from_command_line(args)
+
