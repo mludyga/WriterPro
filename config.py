@@ -29,8 +29,7 @@ Artykuł musi być **analitycznym ROZWINIĘCIEM TEMATU** z poniższych informacj
 
 2. **ZASADY CYTOWANIA (BEZ PRZYPISÓW NUMERYCZNYCH):**
    - Bezwzględny zakaz form typu [1], [2], (1), [^1], <sup>1</sup> oraz sekcji „Bibliografia/Źródła”.
-   - Źródła podawaj deskryptywnie w zdaniu (np. „Jak wynika z danych GUS z 2025 r.…”) **lub** jako link HTML
-     <a href="https://…" rel="nofollow">Nazwa źródła</a>.
+   - Źródła podawaj deskryptywnie w zdaniu (np. „Jak wynika z danych GUS z 2025 r.…”) - to tylko przykład, możesz podać inne źródła zewnętrzne.
    - Nie używaj przypisów dolnych; nie twórz listy źródeł na końcu tekstu.
 
 2a. **KONKRETY ZAMIAST OGÓLNIKÓW:** Masz zakaz pisania ogólnych sformułowań typu "według danych" bez podania konkretnej liczby lub wniosku. Jeśli powołujesz się na źródło, przytocz z niego konkretny, mierzalny fakt.
@@ -331,5 +330,6 @@ SITES = {
         "author_id": 3
     }
 }
+
 
 
