@@ -574,6 +574,99 @@ def run_news_process(site_key, topic_source, manual_topic_data, category_id=None
     else:
         return "BŁĄD: Publikacja newsowego artykułu nie powiodła się."
 
+# krótka lista stop-słów, żeby wyłuskać sensowne tokeny z frazy
+STOPWORDS_PL = {
+    "i","oraz","w","we","na","do","z","ze","o","u","od","pod","nad","przy","po","za",
+    "jest","są","to","tych","ten","ta","te","tę","naj","dla","roku","województwa"
+}
+
+def _extract_keywords_pl(s: str):
+    words = re.findall(r"[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż0-9]+", (s or "").lower())
+    return [w for w in words if len(w) >= 4 and w not in STOPWORDS_PL]
+
+def title_respects_keyword(generated_title: str, manual_kw: str) -> bool:
+    """Sprawdza, czy tytuł jest tematycznie zgodny z frazą użytkownika."""
+    kw_set = set(_extract_keywords_pl(manual_kw))
+    gen_set = set(_extract_keywords_pl(generated_title))
+    if not kw_set:
+        return True
+    common = len(kw_set & gen_set)
+    # uznaj za ok, gdy pokrywa się większość słów kluczowych (tolerancja 1 brakującego)
+    return common >= max(1, len(kw_set) - 1)
+
+def rewrite_title_to_match_keyword(bad_title: str, keyword: str) -> str:
+    """
+    Próbuje poprawić tytuł przez OpenAI; jeśli się nie uda – bezpieczny fallback.
+    Zwraca gotowy <h2>...</h2>.
+    """
+    # 1) spróbuj poprawić modelem
+    try:
+        resp = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            temperature=0.1,
+            max_tokens=60,
+            messages=[{
+                "role": "user",
+                "content": (
+                    "Popraw tytuł artykułu tak, aby był zgodny z frazą kluczową "
+                    "(lub jej bardzo bliskim wariantem), nie zawężał zakresu, "
+                    "stosował polskie zasady kapitalizacji i miał maks. 70 znaków. "
+                    "Zwróć wyłącznie tytuł w tagu <h2>.\n"
+                    f"FRAZA: {keyword}\n"
+                    f"AKTUALNY TYTUŁ: {bad_title}"
+                )
+            }]
+        )
+        fixed = resp.choices[0].message.content.strip()
+        # upewnij się, że mamy <h2>...</h2>
+        if not fixed.lower().startswith("<h2"):
+            fixed_text = re.sub(r"<\/?h2[^>]*>", "", fixed).strip()
+            return f"<h2>{fixed_text[:70]}</h2>"
+        return fixed
+    except Exception as e:
+        logging.warning(f"Nie udało się poprawić tytułu przez AI: {e}")
+
+    # 2) fallback bez modelu – użyj frazy użytkownika, przytnij do 70 znaków
+    safe = (keyword or bad_title or "Artykuł").strip()
+    # prosta normalizacja kapitalizacji pierwszego słowa
+    safe = safe[0].upper() + safe[1:] if safe else "Artykuł"
+    return f"<h2>{safe[:70]}</h2>"
+
+def strip_numeric_citations(html: str) -> str:
+    """
+    Usuwa formy przypisów: [1], [1,2], (1), [^1], <sup>1</sup>, ^1
+    oraz sekcje 'Źródła/Bibliografia'. Czyści nadmiar spacji/pustych linii.
+    """
+    t = html or ""
+
+    # <sup>1</sup>
+    t = re.sub(r'<sup>\s*\d+\s*</sup>', '', t, flags=re.IGNORECASE)
+
+    # [1] lub [1, 2, 3]
+    t = re.sub(r'\s*\[\s*\d+(?:\s*,\s*\d+)*\s*\]', '', t)
+
+    # [^1]
+    t = re.sub(r'\s*\[\^\d+\]', '', t)
+
+    # (1) – tylko nawias z samymi cyframi
+    t = re.sub(r'\s*\(\s*\d+\s*\)', '', t)
+
+    # ^1
+    t = re.sub(r'\s*\^\d+', '', t)
+
+    # sekcje Źródła/Bibliografia – nagłówek H2 + do następnego H2 lub końca
+    t = re.sub(
+        r'<h2[^>]*>\s*(?:Źródła|Zrodla|Bibliografia)\s*</h2>.*?(?=(?:<h2|$))',
+        '', t, flags=re.IGNORECASE | re.DOTALL
+    )
+
+    # porządki typograficzne
+    t = re.sub(r'\s+([,.;:!?])', r'\1', t)
+    t = re.sub(r'[ \t]{2,}', ' ', t)
+    t = re.sub(r'\n{3,}', '\n\n', t)
+
+    return t
+
 def run_generation_process(site_key, topic_source, manual_topic_data, category_id=None):
     """Główna funkcja wykonawcza, wywoływana przez aplikację webową."""
     site_config = SITES[site_key]
@@ -745,6 +838,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     run_from_command_line(args)
+
 
 
 
