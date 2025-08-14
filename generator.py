@@ -348,13 +348,22 @@ def get_or_create_term_id(name, term_type, site_config):
 
 
 def upload_image_to_wp(image_source, article_title, site_config):
+    """
+    Próbuje wgrać media do WP:
+    1) multipart/form-data (files={'file': (...)}),
+    2) fallback: raw body + Content-Disposition.
+
+    Zwraca ID media lub None.
+    """
     if not image_source:
         return None
+
+    # 1) Zdobądź bytes i content_type
     img_content, content_type = None, "image/jpeg"
     if isinstance(image_source, str) and image_source.startswith("http"):
         logging.info(f"Pobieranie obrazka z URL: {image_source}")
         try:
-            img_r = requests.get(image_source, stream=True, timeout=20)
+            img_r = requests.get(image_source, stream=True, timeout=30)
             img_r.raise_for_status()
             img_content = img_r.content
             content_type = img_r.headers.get("content-type", "image/jpeg")
@@ -363,21 +372,69 @@ def upload_image_to_wp(image_source, article_title, site_config):
             return None
     else:
         logging.info("Przetwarzanie wgranego obrazka...")
-        img_content, content_type = image_source.getvalue(), image_source.type
+        try:
+            img_content = image_source.getvalue()
+            # np. 'image/jpeg', 'image/png', 'image/webp'
+            content_type = getattr(image_source, "type", None) or "image/jpeg"
+        except Exception as e:
+            logging.error(f"Nie udało się odczytać uploadowanego pliku: {e}")
+            return None
+
+    # 2) Ustal rozszerzenie po content_type
+    ext_map = {
+        "image/jpeg": ".jpg",
+        "image/jpg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+        "image/gif": ".gif",
+    }
+    ext = ext_map.get(content_type.split(";")[0].strip().lower(), ".jpg")
+
+    # 3) Przygotuj bezpieczną nazwę pliku
     try:
-        headers = get_auth_header(site_config)
         ascii_title = article_title.encode("ascii", "ignore").decode("ascii")
-        safe_filename_base = "".join(c for c in ascii_title if c.isalnum() or c in " ").strip().replace(" ", "_")
-        filename = f"{safe_filename_base[:50]}_img.jpg"
-        headers["Content-Disposition"] = f'attachment; filename="{filename}"'
-        headers["Content-Type"] = content_type
-        wp_r = requests.post(f"{site_config['wp_api_url_base']}/media", headers=headers, data=img_content, timeout=60)
-        wp_r.raise_for_status()
-        logging.info("Obrazek przesłany pomyślnie.")
-        return wp_r.json().get("id")
-    except Exception as e:
-        logging.error(f"Błąd podczas przesyłania obrazka do WP: {e}")
-        return None
+    except Exception:
+        ascii_title = "image"
+    safe_filename_base = "".join(c for c in ascii_title if c.isalnum() or c in " ").strip().replace(" ", "_") or "image"
+    filename = f"{safe_filename_base[:50]}_img{ext}"
+
+    base = site_config["wp_api_url_base"]
+    headers = get_auth_header(site_config)
+
+    # 4) Próba A: multipart/form-data (zalecane przez wiele hostingów)
+    files = {
+        "file": (filename, img_content, content_type),
+    }
+    try:
+        r = requests.post(f"{base}/media", headers=headers, files=files, timeout=60)
+        r.raise_for_status()
+        media_id = r.json().get("id")
+        logging.info(f"Obrazek przesłany (multipart). ID={media_id}")
+        return media_id
+    except requests.exceptions.HTTPError as e:
+        body = e.response.text if getattr(e, "response", None) is not None else ""
+        logging.error(f"Upload multipart nieudany: {e}  Odpowiedź: {body}")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Upload multipart błąd sieci: {e}")
+
+    # 5) Próba B: surowe body + Content-Disposition (fallback)
+    try:
+        headers2 = headers.copy()
+        headers2["Content-Disposition"] = f'attachment; filename="{filename}"'
+        headers2["Content-Type"] = content_type
+        r2 = requests.post(f"{base}/media", headers=headers2, data=img_content, timeout=60)
+        r2.raise_for_status()
+        media_id = r2.json().get("id")
+        logging.info(f"Obrazek przesłany (raw fallback). ID={media_id}")
+        return media_id
+    except requests.exceptions.HTTPError as e2:
+        body2 = e2.response.text if getattr(e2, "response", None) is not None else ""
+        logging.error(f"Upload raw nieudany: {e2}  Odpowiedź: {body2}")
+    except requests.exceptions.RequestException as e2:
+        logging.error(f"Upload raw błąd sieci: {e2}")
+
+    return None
+
 
 
 def publish_to_wp(data_to_publish, site_config):
@@ -807,4 +864,5 @@ if __name__ == "__main__":
     parser.add_argument("--source", type=str, choices=["Automatycznie", "Ręcznie"], default="Automatycznie", help="Źródło tematu.")
     args = parser.parse_args()
     run_from_command_line(args)
+
 
